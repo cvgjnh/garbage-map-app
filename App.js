@@ -1,47 +1,16 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, Button } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import React, {useState, useEffect} from 'react';
-import MapView from 'react-native-maps';
-import { Marker, Callout } from 'react-native-maps';
-import * as Location from 'expo-location';
-import Realm from 'realm';
-import {createRealmContext} from '@realm/react';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
-// Define your object model
-class GarbageMarker extends Realm.Object {
-  static schema = {
-    name: 'GarbageMarker',
-    properties: {
-      title: 'string',
-      description: 'string',
-      latitude: 'float',
-      longitude: 'float',
-      _id: 'objectId',
-    },
-    primaryKey: '_id',
-  };
-}
+import { MapScreen } from './components/MapScreen';
+import { AddScreen } from './components/AddScreen';
+import { ProfileScreen } from './components/ProfileScreen';
+import { MoreScreen } from './components/MoreScreen';
 
-class Profile extends Realm.Object {
-  static schema = {
-    name: 'Profile',
-    properties: {
-      _id: 'objectId',
-      name: 'string',
-    },
-    primaryKey: '_id',
-  };
-}
-
-// Create a configuration object
-const realmConfig = {
-  schema: [GarbageMarker, Profile],
-};
-// Create a realm context
-const {RealmProvider, useRealm, useObject, useQuery} =
-  createRealmContext(realmConfig);
 
 const tokyoRegion = {
   latitude: 35.6762,
@@ -50,107 +19,71 @@ const tokyoRegion = {
   longitudeDelta: 0.01,
 };
 
-function MapScreen() {
-
-  const [position, setPosition] = useState(null);
-
-  
-
-  useEffect(() => {
-    (async () => {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        return;
-      }
-
-      let location = await Location.getCurrentPositionAsync({});
-      setPosition({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-        latitudeDelta: 0.0421,
-        longitudeDelta: 0.0421,
-      });
-    })();
-  }, []);
-
-
-  return (
-    <View style={{ flex: 1 }}>
-      {position &&
-      <MapView
-        style={styles.map}
-        initialRegion={position}
-        showsUserLocation={true}
-        showsMyLocationButton={true}
-        followsUserLocation={true}
-        showsCompass={true}
-        scrollEnabled={true}
-        zoomEnabled={true}
-        pitchEnabled={true}
-        rotateEnabled={true}>
-          <Marker
-            title='You are here'
-            description='This is a description'
-            coordinate={position}
-            //onPress={() => {toggleMarkerBox()}}
-
-          >
-            <Callout tooltip={true}>
-              {/* <View style={styles.markerBox}>
-                <View>
-                  <Text> Title </Text>
-                  <Text> Description </Text>
-
-                </View>
-              </View> */}
-
-            </Callout>
-          </Marker>
-      </MapView>
-      } 
-    </View>
-  )
-}
-
-function AddScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Add</Text>
-    </View>
-  )
-}
-
-function ProfileScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Profile</Text>
-    </View>
-  )
-}
-
-function MoreScreen() {
-  return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>More</Text>
-    </View>
-  )
-}
-
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+
+    return subscriber;
+  }, []);
+
+  function onAuthStateChanged(user) {
+    if (user) {
+      const uid = user.uid;
+      const data = {
+        uid: uid,
+        email: user.email,
+        username: uid.substring(0, 8),
+      };
+      const usersRef = firestore().collection('users');
+      usersRef
+        .doc(uid)
+        .get()
+        .then(firestoreDocument => {
+          if (!firestoreDocument.exists) {
+            usersRef
+              .doc(data.uid)
+              .set(data)
+            setUser(data);
+          }
+          else {
+            setUser(firestoreDocument.data());
+          }
+        })
+        .catch(error => {
+          Alert.alert(JSON.stringify(error.message));
+          console.log('Error getting document:', error);
+        });
+    }
+    else {
+      setUser(null);
+    }
+  }
+
+
   return (
-    <RealmProvider>
-      <NavigationContainer>
-        <Tab.Navigator>
-          <Tab.Screen name="Map" component={MapScreen} />
-          <Tab.Screen name="Add" component={AddScreen} />
-          <Tab.Screen name="Profile" component={ProfileScreen} />
-          <Tab.Screen name="More" component={MoreScreen} />
-        </Tab.Navigator>
-      </NavigationContainer>
-    </RealmProvider>
+
+    <NavigationContainer>
+      <Tab.Navigator>
+        <Tab.Screen 
+          name="Map"
+          children={() => <MapScreen user={user}/>}
+        />
+        <Tab.Screen 
+          name="Add"
+          children={() => <AddScreen user={user} onAuthStateChanged={onAuthStateChanged}/>}
+        />
+        <Tab.Screen 
+          name="Profile"
+          children={() => <ProfileScreen user={user} setUser={setUser} onAuthStateChanged={onAuthStateChanged}/>}
+        />
+        <Tab.Screen name="More" component={MoreScreen} />
+      </Tab.Navigator>
+    </NavigationContainer>
+
   );
 }
 

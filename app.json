@@ -22,10 +22,20 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.anonymous.JapanGarbageMap"
+      "package": "com.anonymous.JapanGarbageMap",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBqz-gEJkERfwZ6Kh1KkrVABMofWiMdViU"
+        }
+      }
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d1b43510-c56b-48cd-b0cf-59020274284d"
+      }
     }
   }
 }

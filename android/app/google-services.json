@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "451639436511",
+    "project_id": "round-sunset-391519",
+    "storage_bucket": "round-sunset-391519.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:451639436511:android:7545148c6bacf81166f56a",
+        "android_client_info": {
+          "package_name": "com.anonymous.JapanGarbageMap"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "451639436511-qo76g9e0etogt80193m660bi0aprbjia.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.anonymous.JapanGarbageMap",
+            "certificate_hash": "6a72baf1f78b2b84972474e64116ada20608c675"
+          }
+        },
+        {
+          "client_id": "451639436511-ii6eceujoj7ib8cchq6tnfd248d9afkg.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBqz-gEJkERfwZ6Kh1KkrVABMofWiMdViU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "451639436511-ii6eceujoj7ib8cchq6tnfd248d9afkg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -205,7 +205,6 @@ export function AddScreen(props) {
         } catch (e) {
             console.error(e)
         }
-        setUploading(false)
         return filename
     }
 
@@ -223,159 +222,89 @@ export function AddScreen(props) {
         setCurrentLocationButtonPressed(false)
     }
 
-    const handleFormSubmit = useCallback(
-        _throttle(() => {
-            setMissing([])
-            setChooseOneWarning(false)
-            // You can perform form submission logic here
-            if (!title || !image || !position) {
-                if (!title) {
-                    setMissing((prevMissing) => [...prevMissing, 'title'])
-                }
-                if (!image) {
-                    setMissing((prevMissing) => [...prevMissing, 'image'])
-                }
-                if (!position) {
-                    setMissing((prevMissing) => [...prevMissing, 'position'])
-                }
-                return
+    const handleFormSubmit = _debounce(() => {
+        setMissing([])
+        setChooseOneWarning(false)
+        // You can perform form submission logic here
+        if (!title || !image || !position) {
+            if (!title) {
+                setMissing((prevMissing) => [...prevMissing, 'title'])
             }
-            if (!isTrash && !isRefundables && !isCompost && !isRecyclables) {
-                setChooseOneWarning(true)
-                return
+            if (!image) {
+                setMissing((prevMissing) => [...prevMissing, 'image'])
             }
-            if (props.selectedMarker) {
-                // if editing a marker and the image was changed, need to delete and upload new image
-                if (imageUpdated) {
-                    storage()
-                        .ref(props.selectedMarker.image)
-                        .delete()
-                        .then(() => {
-                            console.log('Original image deleted!')
-                            return uploadImage()
-                        })
-                        .then((filename) => {
-                            console.log('new image uploaded')
-                            return GeoFirestore.collection('markers')
-                                .doc(props.selectedMarker.id)
-                                .update({
-                                    title: title,
-                                    description: description,
-                                    isTrash: isTrash,
-                                    isRefundables: isRefundables,
-                                    isCompost: isCompost,
-                                    isRecyclables: isRecyclables,
-                                    image: filename,
-                                })
-                        })
-                        .then(() => {
-                            Alert.alert(
-                                'Marker Updated!',
-                                '',
-                                [
-                                    {
-                                        text: 'OK',
-                                        onPress: () => navigation.pop(),
-                                    },
-                                ],
-                                { onDismiss: () => navigation.pop() }
-                            )
-                        })
-                        .catch((error) => {
-                            console.log(error)
-                        })
-
-                    // if editing a marker and the image was not changed, just update the marker
-                } else {
-                    GeoFirestore.collection('markers')
-                        .doc(props.selectedMarker.id)
-                        .update({
-                            title: title,
-                            description: description,
-                            isTrash: isTrash,
-                            isRefundables: isRefundables,
-                            isCompost: isCompost,
-                            isRecyclables: isRecyclables,
-                        })
-                        .then(() => {
-                            Alert.alert(
-                                'Marker Updated!',
-                                '',
-                                [
-                                    {
-                                        text: 'OK',
-                                        onPress: () => navigation.pop(),
-                                    },
-                                ],
-                                { onDismiss: () => navigation.pop() }
-                            )
-                        })
-                        .catch((error) => {
-                            console.log(error)
-                        })
-                }
-            } else {
-                uploadImage()
+            if (!position) {
+                setMissing((prevMissing) => [...prevMissing, 'position'])
+            }
+            return
+        }
+        if (!isTrash && !isRefundables && !isCompost && !isRecyclables) {
+            setChooseOneWarning(true)
+            return
+        }
+        if (props.selectedMarker) {
+            // if editing a marker and the image was changed, need to delete and upload new image
+            if (imageUpdated) {
+                storage()
+                    .ref(props.selectedMarker.image)
+                    .delete()
+                    .then(() => {
+                        console.log('Original image deleted!')
+                        return uploadImage()
+                    })
                     .then((filename) => {
-                        timeCreated = firestore.Timestamp.fromDate(new Date())
-                        return GeoFirestore.collection('markers').add({
-                            title: title,
-                            description: description,
-                            coordinates: new firestore.GeoPoint(
-                                position.latitude,
-                                position.longitude
-                            ),
-                            userId: props.user.uid,
-                            username: props.user.username,
-                            isTrash: isTrash,
-                            isRefundables: isRefundables,
-                            isCompost: isCompost,
-                            isRecyclables: isRecyclables,
-                            image: filename,
-                            createdAt: timeCreated,
-                            lastSeen: timeCreated,
-                        })
-                    })
-                    .then((docRef) => {
-                        return docRef.get()
-                    })
-                    .then((documentSnapshot) => {
-                        // props.setMarkers((prevMarkers) => [
-                        //     ...prevMarkers,
-                        //     { ...documentSnapshot.data(), id: documentSnapshot.id },
-                        // ])
-                        return firestore()
-                            .collection('logs')
-                            .add({
-                                markerId: documentSnapshot.id,
-                                body: 'Marker added!',
-                                createdAt: firestore.Timestamp.fromDate(
-                                    new Date()
-                                ),
-                                found: true,
-                                username: props.user.username,
-                            })
-                    })
-                    .then(() => {
-                        return firestore()
-                            .collection('users')
-                            .doc(props.user.uid)
+                        console.log('new image uploaded')
+                        return GeoFirestore.collection('markers')
+                            .doc(props.selectedMarker.id)
                             .update({
-                                numCreatedMarkers:
-                                    props.user.numCreatedMarkers + 1,
-                                numCreatedLogs: props.user.numCreatedLogs + 1,
+                                title: title,
+                                description: description,
+                                isTrash: isTrash,
+                                isRefundables: isRefundables,
+                                isCompost: isCompost,
+                                isRecyclables: isRecyclables,
+                                image: filename,
                             })
                     })
                     .then(() => {
-                        props.setUser({
-                            ...props.user,
-                            numCreatedLogs: props.user.numCreatedLogs + 1,
-                            numCreatedMarkers: props.user.numCreatedMarkers + 1,
-                        })
                         Alert.alert(
-                            'Marker added!',
+                            'Marker Updated!',
                             '',
-                            [{ text: 'OK', onPress: () => navigation.pop() }],
+                            [
+                                {
+                                    text: 'OK',
+                                    onPress: () => navigation.pop(),
+                                },
+                            ],
+                            { onDismiss: () => navigation.pop() }
+                        )
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                    })
+
+                // if editing a marker and the image was not changed, just update the marker
+            } else {
+                GeoFirestore.collection('markers')
+                    .doc(props.selectedMarker.id)
+                    .update({
+                        title: title,
+                        description: description,
+                        isTrash: isTrash,
+                        isRefundables: isRefundables,
+                        isCompost: isCompost,
+                        isRecyclables: isRecyclables,
+                    })
+                    .then(() => {
+                        Alert.alert(
+                            'Marker Updated!',
+                            '',
+                            [
+                                {
+                                    text: 'OK',
+                                    onPress: () => navigation.pop(),
+                                },
+                            ],
                             { onDismiss: () => navigation.pop() }
                         )
                     })
@@ -383,9 +312,73 @@ export function AddScreen(props) {
                         console.log(error)
                     })
             }
-        }, 5000),
-        []
-    )
+        } else {
+            uploadImage()
+                .then((filename) => {
+                    timeCreated = firestore.Timestamp.fromDate(new Date())
+                    return GeoFirestore.collection('markers').add({
+                        title: title,
+                        description: description,
+                        coordinates: new firestore.GeoPoint(
+                            position.latitude,
+                            position.longitude
+                        ),
+                        userId: props.user.uid,
+                        username: props.user.username,
+                        isTrash: isTrash,
+                        isRefundables: isRefundables,
+                        isCompost: isCompost,
+                        isRecyclables: isRecyclables,
+                        image: filename,
+                        createdAt: timeCreated,
+                        lastSeen: timeCreated,
+                    })
+                })
+                .then((docRef) => {
+                    return docRef.get()
+                })
+                .then((documentSnapshot) => {
+                    // props.setMarkers((prevMarkers) => [
+                    //     ...prevMarkers,
+                    //     { ...documentSnapshot.data(), id: documentSnapshot.id },
+                    // ])
+                    return firestore()
+                        .collection('logs')
+                        .add({
+                            markerId: documentSnapshot.id,
+                            body: 'Marker added!',
+                            createdAt: firestore.Timestamp.fromDate(new Date()),
+                            found: true,
+                            username: props.user.username,
+                        })
+                })
+                .then(() => {
+                    return firestore()
+                        .collection('users')
+                        .doc(props.user.uid)
+                        .update({
+                            numCreatedMarkers: props.user.numCreatedMarkers + 1,
+                            numCreatedLogs: props.user.numCreatedLogs + 1,
+                        })
+                })
+                .then(() => {
+                    props.setUser({
+                        ...props.user,
+                        numCreatedLogs: props.user.numCreatedLogs + 1,
+                        numCreatedMarkers: props.user.numCreatedMarkers + 1,
+                    })
+                    Alert.alert(
+                        'Marker added!',
+                        '',
+                        [{ text: 'OK', onPress: () => navigation.pop() }],
+                        { onDismiss: () => navigation.pop() }
+                    )
+                })
+                .catch((error) => {
+                    console.log(error)
+                })
+        }
+    }, 1000)
 
     if (props.user) {
         return (
@@ -574,17 +567,6 @@ export function AddScreen(props) {
                     </Text>
                 )}
                 <Divider />
-                <View style={styles.submitBar}>
-                    <Button
-                        onPress={() => resetForm()}
-                        disabled={props.selectedMarker ? true : false}
-                    >
-                        Reset Form
-                    </Button>
-                    <Button onPress={handleFormSubmit} mode="contained">
-                        Submit
-                    </Button>
-                </View>
                 {uploading && (
                     <View>
                         <ProgressBar
@@ -593,6 +575,21 @@ export function AddScreen(props) {
                         />
                     </View>
                 )}
+                <View style={styles.submitBar}>
+                    <Button
+                        onPress={() => resetForm()}
+                        disabled={props.selectedMarker ? true : false}
+                    >
+                        Reset Form
+                    </Button>
+                    <Button
+                        onPress={handleFormSubmit}
+                        mode="contained"
+                        disabled={uploading}
+                    >
+                        Submit
+                    </Button>
+                </View>
             </ScrollView>
         )
     }

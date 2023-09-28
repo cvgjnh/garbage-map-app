@@ -449,7 +449,7 @@ export function AddScreen(props) {
                     onChangeText={setDescription}
                     multiline={true}
                     numberOfLines={4}
-                    descriptionMaxLength={descriptionMaxLength}
+                    maxLength={descriptionMaxLength}
                 />
                 <Text style={styles.textLimit}>
                     {description.length}/{descriptionMaxLength}

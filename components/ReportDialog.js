@@ -19,13 +19,15 @@ export function ReportDialog(props) {
     const [inappropriateDescription, setInappropriateDescription] =
         useState(false)
     const [inappropriateImage, setInappropriateImage] = useState(false)
+    const [notPublicWasteBin, setNotPublicWasteBin] = useState(false)
     const [chooseOneWarning, setChooseOneWarning] = useState(false)
 
     const handleSubmit = () => {
         if (
             !inappropriateTitle &&
             !inappropriateDescription &&
-            !inappropriateImage
+            !inappropriateImage &&
+            !notPublicWasteBin
         ) {
             setChooseOneWarning(true)
             return
@@ -40,6 +42,7 @@ export function ReportDialog(props) {
                 inappropriateTitle: inappropriateTitle,
                 inappropriateDescription: inappropriateDescription,
                 inappropriateImage: inappropriateImage,
+                notPublicWasteBin: notPublicWasteBin,
                 details: textEntry,
                 username: props.user ? props.user.username : 'anonymous',
             })
@@ -56,6 +59,7 @@ export function ReportDialog(props) {
         setInappropriateTitle(false)
         setInappropriateDescription(false)
         setInappropriateImage(false)
+        setNotPublicWasteBin(false)
         setChooseOneWarning(false)
         props.setReportDialogOpen(false)
     }
@@ -109,6 +113,18 @@ export function ReportDialog(props) {
                         <Text variant="labelLarge">
                             {' '}
                             Inappropriate Description
+                        </Text>
+                    </View>
+                    <View style={styles.row}>
+                        <Checkbox
+                            status={notPublicWasteBin ? 'checked' : 'unchecked'}
+                            onPress={() => {
+                                setNotPublicWasteBin(!notPublicWasteBin)
+                            }}
+                        />
+                        <Text variant="labelLarge">
+                            {' '}
+                            Not a Public Waste Bin
                         </Text>
                     </View>
                     {chooseOneWarning && (

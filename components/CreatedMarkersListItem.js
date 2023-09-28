@@ -39,6 +39,7 @@ export function CreatedMarkersListItem(props) {
                         <IconButton
                             onPress={() => {
                                 setMenuVisible(true)
+                                props.setSelectedMarker(props.marker)
                             }}
                             icon="dots-vertical"
                             // style={styles.contextMenu}
@@ -47,7 +48,6 @@ export function CreatedMarkersListItem(props) {
                 >
                     <Menu.Item
                         onPress={() => {
-                            props.setSelectedMarker(props.marker)
                             props.setModalVisible(true)
                             setMenuVisible(false)
                         }}
@@ -55,7 +55,6 @@ export function CreatedMarkersListItem(props) {
                     />
                     <Menu.Item
                         onPress={() => {
-                            props.setSelectedMarker(props.marker)
                             navigation.navigate('Update')
                             setMenuVisible(false)
                         }}
@@ -63,7 +62,6 @@ export function CreatedMarkersListItem(props) {
                     />
                     <Menu.Item
                         onPress={() => {
-                            props.setSelectedMarker(props.marker)
                             props.setDeleteDialogVisible(true)
                             setMenuVisible(false)
                         }}

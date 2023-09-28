@@ -41,11 +41,32 @@ export function MarkerModal(props) {
     const [reportDialogOpen, setReportDialogOpen] = useState(false)
     const navigation = useNavigation()
 
-    // if the user selects a different maker, reset the logs and image
+    // if the user selects a different marker, reset the logs and image
     useEffect(() => {
         setSelectedMarkerLogs([])
         setImageURL(null)
     }, [props.selectedMarker && props.selectedMarker.id])
+
+    // triggers when the modal is opened
+    useEffect(() => {
+        if (props.selectedMarker && props.modalVisible) {
+            if (imageURL === null) {
+                storage()
+                    .ref(props.selectedMarker.image)
+                    .getDownloadURL()
+                    .then((url) => {
+                        setImageURL(url)
+                    })
+                    .catch((error) => {
+                        console.log('Error getting image URL: ', error)
+                    })
+            }
+
+            if (selectedMarkerLogs.length === 0) {
+                getLogs()
+            }
+        }
+    }, [props.modalVisible])
 
     const openMap = async (latitude, longitude) => {
         const link = `https://www.google.com/maps/dir/?api=1&destination=${latitude},${longitude}`
@@ -112,58 +133,31 @@ export function MarkerModal(props) {
     //     }
     // }
 
-    // triggers when the modal is opened
-    useEffect(() => {
-        if (props.selectedMarker && props.modalVisible) {
-            if (imageURL === null) {
-                storage()
-                    .ref(props.selectedMarker.image)
-                    .getDownloadURL()
-                    .then((url) => {
-                        setImageURL(url)
-                    })
-                    .catch((error) => {
-                        console.log('Error getting image URL: ', error)
-                    })
-            }
-
-            if (selectedMarkerLogs.length === 0) {
-                getLogs()
-            }
-        }
-    }, [props.modalVisible])
-
     return (
         <>
-            <LogDialog
-                selectedMarker={props.selectedMarker}
-                setSelectedMarker={props.setSelectedMarker}
-                logDialogOpen={logDialogOpen}
-                setLogDialogOpen={setLogDialogOpen}
-                user={props.user}
-                setUser={props.setUser}
-                setSelectedMarkerLogs={setSelectedMarkerLogs}
-            />
-            <ReportDialog
-                selectedMarker={props.selectedMarker}
-                reportDialogOpen={reportDialogOpen}
-                setReportDialogOpen={setReportDialogOpen}
-                user={props.user}
-            />
-
             <Portal>
                 <Modal
-                    // animationType="slide"
-                    // transparent={false}
                     visible={props.modalVisible}
                     onDismiss={() => {
                         props.setModalVisible(!props.modalVisible)
                     }}
                     contentContainerStyle={styles.container}
-                    // onShow={() => {
-                    //     onModalOpen()
-                    // }}
                 >
+                    <LogDialog
+                        selectedMarker={props.selectedMarker}
+                        setSelectedMarker={props.setSelectedMarker}
+                        logDialogOpen={logDialogOpen}
+                        setLogDialogOpen={setLogDialogOpen}
+                        user={props.user}
+                        setUser={props.setUser}
+                        setSelectedMarkerLogs={setSelectedMarkerLogs}
+                    />
+                    <ReportDialog
+                        selectedMarker={props.selectedMarker}
+                        reportDialogOpen={reportDialogOpen}
+                        setReportDialogOpen={setReportDialogOpen}
+                        user={props.user}
+                    />
                     <Appbar.Header>
                         <Appbar.BackAction
                             onPress={() =>
@@ -214,7 +208,7 @@ export function MarkerModal(props) {
                                         setReportDialogOpen(true)
                                         setMenuVisible(false)
                                     }}
-                                    title="View"
+                                    title="Report"
                                 />
                             </Menu>
                         </View>

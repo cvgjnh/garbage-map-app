@@ -1,107 +1,167 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import React, {useState, useEffect} from 'react';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
+import { StatusBar } from 'expo-status-bar'
+import { StyleSheet, useColorScheme, LogBox } from 'react-native'
+import { NavigationContainer } from '@react-navigation/native'
+import React, { useState, useEffect, createContext } from 'react'
+import auth from '@react-native-firebase/auth'
+import firestore from '@react-native-firebase/firestore'
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
+import { MapScreen } from './components/MapScreen'
+import { AddScreen } from './components/AddScreen'
+import { MapAddScreen } from './components/MapAddScreen'
+import { ProfileScreen } from './components/ProfileScreen'
+import { MoreScreen } from './components/MoreScreen'
+import { MD3LightTheme, MD3DarkTheme, PaperProvider } from 'react-native-paper'
+import { createMaterialBottomTabNavigator } from 'react-native-paper/react-navigation'
 
-import { MapScreen } from './components/MapScreen';
-import { AddScreen } from './components/AddScreen';
-import { ProfileScreen } from './components/ProfileScreen';
-import { MoreScreen } from './components/MoreScreen';
+const Tab = createMaterialBottomTabNavigator()
+const UserContext = createContext()
 
-
-const tokyoRegion = {
-  latitude: 35.6762,
-  longitude: 139.6503,
-  latitudeDelta: 0.01,
-  longitudeDelta: 0.01,
-};
-
-const Tab = createBottomTabNavigator();
+LogBox.ignoreLogs([
+    'Non-serializable values were found in the navigation state',
+])
 
 export default function App() {
-  const [user, setUser] = useState(null);
+    const [user, setUser] = useState(null)
+    const [markers, setMarkers] = useState([])
 
-  useEffect(() => {
-    const subscriber = auth().onAuthStateChanged(onAuthStateChanged);
+    const colorScheme = useColorScheme()
 
-    return subscriber;
-  }, []);
+    // const paperTheme =
+    //     colorScheme === 'dark' ? { ...MD3DarkTheme } : { ...MD3LightTheme }
 
-  function onAuthStateChanged(user) {
-    if (user) {
-      const uid = user.uid;
-      const data = {
-        uid: uid,
-        email: user.email,
-        username: uid.substring(0, 8),
-      };
-      const usersRef = firestore().collection('users');
-      usersRef
-        .doc(uid)
-        .get()
-        .then(firestoreDocument => {
-          if (!firestoreDocument.exists) {
+    const paperTheme = {
+        ...MD3LightTheme,
+        colors: { ...MD3LightTheme.colors },
+    }
+
+    useEffect(() => {
+        const subscriber = auth().onAuthStateChanged(onAuthStateChanged)
+        return subscriber
+    }, [])
+
+    function onAuthStateChanged(user) {
+        if (user) {
+            const uid = user.uid
+            const data = {
+                uid: uid,
+                email: user.email,
+                username: uid.substring(0, 8),
+                numCreatedMarkers: 0,
+                numCreatedLogs: 0,
+            }
+            const usersRef = firestore().collection('users')
             usersRef
-              .doc(data.uid)
-              .set(data)
-            setUser(data);
-          }
-          else {
-            setUser(firestoreDocument.data());
-          }
-        })
-        .catch(error => {
-          Alert.alert(JSON.stringify(error.message));
-          console.log('Error getting document:', error);
-        });
+                .doc(uid)
+                .get()
+                .then((firestoreDocument) => {
+                    if (!firestoreDocument.exists) {
+                        usersRef.doc(data.uid).set(data)
+                        setUser(data)
+                    } else {
+                        setUser(firestoreDocument.data())
+                    }
+                })
+                .catch((error) => {
+                    console.log('Error getting document:', error)
+                })
+        } else {
+            setUser(null)
+        }
     }
-    else {
-      setUser(null);
-    }
-  }
 
+    return (
+        <PaperProvider theme={paperTheme}>
+            <UserContext.Provider value={{ user, setUser }}>
+                {/* <StatusBar /> */}
+                <NavigationContainer>
+                    <Tab.Navigator
+                        screenOptions={({ route }) => ({
+                            tabBarIcon: () => {
+                                let iconName
+                                size = 24
 
-  return (
+                                if (route.name === 'MapAdd') {
+                                    iconName = 'map-marker'
+                                } else if (route.name === 'Profile') {
+                                    iconName = 'account'
+                                } else if (route.name === 'More') {
+                                    iconName = 'lightbulb'
+                                }
 
-    <NavigationContainer>
-      <Tab.Navigator>
-        <Tab.Screen 
-          name="Map"
-          children={() => <MapScreen user={user}/>}
-        />
-        <Tab.Screen 
-          name="Add"
-          children={() => <AddScreen user={user} onAuthStateChanged={onAuthStateChanged}/>}
-        />
-        <Tab.Screen 
-          name="Profile"
-          children={() => <ProfileScreen user={user} setUser={setUser} onAuthStateChanged={onAuthStateChanged}/>}
-        />
-        <Tab.Screen name="More" component={MoreScreen} />
-      </Tab.Navigator>
-    </NavigationContainer>
+                                // You can return any component that you like here!
+                                return <Icon name={iconName} size={size} />
+                            },
+                        })}
+                    >
+                        {/* <Tab.Screen
+                        name="Map"
+                        children={() => (
+                            <MapScreen
+                                user={user}
+                                setUser={setUser}
+                                markers={markers}
+                                setMarkers={setMarkers}
+                            />
+                        )}
+                    />
+                    <Tab.Screen
+                        name="Add"
+                        children={() => (
+                            <AddScreen
+                                user={user}
+                                setUser={setUser}
+                                onAuthStateChanged={onAuthStateChanged}
+                                setMarkers={setMarkers}
+                            />
+                        )}
+                    /> */}
+                        <Tab.Screen
+                            name="MapAdd"
+                            children={() => (
+                                <MapAddScreen
+                                    user={user}
+                                    setUser={setUser}
+                                    markers={markers}
+                                    setMarkers={setMarkers}
+                                />
+                            )}
+                        />
 
-  );
+                        <Tab.Screen
+                            name="Profile"
+                            children={() => (
+                                <ProfileScreen
+                                    user={user}
+                                    setUser={setUser}
+                                    setMarkers={setMarkers}
+                                    onAuthStateChanged={onAuthStateChanged}
+                                />
+                            )}
+                        />
+                        <Tab.Screen
+                            name="More"
+                            children={() => <MoreScreen user={user} />}
+                        />
+                    </Tab.Navigator>
+                </NavigationContainer>
+            </UserContext.Provider>
+        </PaperProvider>
+    )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  map: {
-    width: '100%',
-    height: '100%',
-  },
-  markerBox: {
-    margin: 20,
-    flex: 1
-
-    
-  }
-});
+    container: {
+        flex: 1,
+        backgroundColor: '#fff',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    map: {
+        width: '100%',
+        height: '100%',
+    },
+    markerBox: {
+        margin: 20,
+        flex: 1,
+    },
+})

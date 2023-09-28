@@ -1,265 +1,680 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, TextInput, Modal, Alert, Check } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import React, {useState, useEffect} from 'react';
-import MapView from 'react-native-maps';
-import { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps';
-import * as Location from 'expo-location';
-import Realm from 'realm';
-import {createRealmContext} from '@realm/react';
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import auth from '@react-native-firebase/auth';
-import firestore from '@react-native-firebase/firestore';
-import { useNavigation } from '@react-navigation/native';
+import { StyleSheet, View, Alert, Image, Dimensions } from 'react-native'
+import {
+    Button,
+    Text,
+    TextInput,
+    Checkbox,
+    Divider,
+    Appbar,
+    ProgressBar,
+} from 'react-native-paper'
+import React, { useState, useEffect, useCallback } from 'react'
+import _throttle from 'lodash/throttle'
+import _debounce from 'lodash/debounce'
+import * as Location from 'expo-location'
+import firestore from '@react-native-firebase/firestore'
+import { useNavigation } from '@react-navigation/native'
+import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
 
-import { GoogleSignIn } from './GoogleSignIn';
-import { set } from 'react-native-reanimated';
-import CheckBox from '@react-native-community/checkbox';
+import * as geofirestore from 'geofirestore'
+// import * as ImagePicker from 'react-native-image-picker'
+import ImagePicker from 'react-native-image-crop-picker'
 
+import storage from '@react-native-firebase/storage'
+import { SelectLocationModal } from './SelectLocationModal'
+import { ScrollView } from 'react-native-gesture-handler'
+
+const deviceWidth = Dimensions.get('window').width
 
 export function AddScreen(props) {
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [modalVisible, setModalVisible] = useState(false);
-    const [position, setPosition] = useState(null);
-    const [isTrash, setIsTrash] = useState(false);
-    const [isBottles, setIsBottles] = useState(false);
-    const [isCompost, setIsCompost] = useState(false);
-    const [missing, setMissing] = useState([]);
-    const [chooseOneWarning, setChooseOneWarning] = useState(false);
-
-    const navigation = useNavigation();
-
-  
-    const handleFormSubmit = () => {
-      setMissing([]);
-      setChooseOneWarning(false);
-      // You can perform form submission logic here
-      if (!title) {
-        setMissing(prevMissing => [...prevMissing, 'title']);
-      }
-      if (!description) {
-        setMissing(prevMissing => [...prevMissing, 'description']);
-      }
-      if (!isTrash && !isBottles && !isCompost) {
-        setChooseOneWarning(true);
-      }
-      if (missing.length > 0 || chooseOneWarning) {
-        return;
-      }
-
-      console.log('Title:', title);
-      console.log('Description:', description);
-
-      firestore()
-        .collection('markers')
-        .add({
-          title: title,
-          description: description,  
-          location: new firestore.GeoPoint(position.latitude, position.longitude),
-          username: props.user.username,
-          isTrash: isTrash,
-          isBottles: isBottles,
-          isCompost: isCompost,
-        })
-        .then((docRef) => {
-          Alert.alert('Marker added!');
-          setTitle('');
-          setDescription('');
-          setIsTrash(false);
-          setIsBottles(false);
-          setIsCompost(false);
-          firestore()
-            .collection('logs')
-            .add({
-              markerId: docRef.id,
-              body: "Marker added!",
-              createdAt: firestore.Timestamp.fromDate(new Date()),
-              found: true,
-              username: props.user.username,
-            })
-        })  
-    };
+    const [title, setTitle] = useState(
+        props.selectedMarker ? props.selectedMarker.title : ''
+    )
+    const [description, setDescription] = useState(
+        props.selectedMarker ? props.selectedMarker.description : ''
+    )
+    const [modalVisible, setModalVisible] = useState(false)
+    const [position, setPosition] = useState(
+        props.selectedMarker
+            ? {
+                  latitude: props.selectedMarker.coordinates.latitude,
+                  longitude: props.selectedMarker.coordinates.longitude,
+                  latitudeDelta: 0.0421,
+                  longitudeDelta: 0.0421,
+              }
+            : null
+    )
+    const [isTrash, setIsTrash] = useState(
+        props.selectedMarker ? props.selectedMarker.isTrash : false
+    )
+    const [isRefundables, setIsRefundables] = useState(
+        props.selectedMarker ? props.selectedMarker.isRefundables : false
+    )
+    const [isCompost, setIsCompost] = useState(
+        props.selectedMarker ? props.selectedMarker.isCompost : false
+    )
+    const [isRecyclables, setIsRecyclables] = useState(
+        props.selectedMarker ? props.selectedMarker.isRecyclables : false
+    )
+    const [missing, setMissing] = useState([])
+    const [chooseOneWarning, setChooseOneWarning] = useState(false)
+    const [image, setImage] = useState(null)
+    const [uploading, setUploading] = useState(false)
+    const [transferred, setTransferred] = useState(0)
+    const [currentLocationButtonPressed, setCurrentLocationButtonPressed] =
+        useState(false)
+    const [imageUpdated, setImageUpdated] = useState(false)
 
     useEffect(() => {
-        const centerOnUser = async () => {
-          let { status } = await Location.requestForegroundPermissionsAsync();
-          if (status !== 'granted') {
-            setErrorMsg('Permission to access location was denied');
-            return;
-          }
-    
-          let location = await Location.getCurrentPositionAsync({});
-          setPosition({
+        if (props.selectedMarker) {
+            storage()
+                .ref(props.selectedMarker.image)
+                .getDownloadURL()
+                .then((url) => {
+                    setImage(url)
+                })
+                .catch((error) => {
+                    console.log('Error getting image URL: ', error)
+                })
+        }
+    }, [])
+
+    const navigation = useNavigation()
+
+    const GeoFirestore = geofirestore.initializeApp(firestore())
+
+    const titleMaxLength = 40
+    const descriptionMaxLength = 200
+
+    const useCurrentLocation = async () => {
+        let { status } = await Location.requestForegroundPermissionsAsync()
+        if (status !== 'granted') {
+            setErrorMsg('Permission to access location was denied')
+            return
+        }
+
+        let location = await Location.getCurrentPositionAsync({})
+        setPosition({
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
             latitudeDelta: 0.0421,
             longitudeDelta: 0.0421,
-          });
-        };
-        centerOnUser();
-    }, []);
-    
-  
+        })
+        // setLocationLoading(false)
+        setCurrentLocationButtonPressed(true)
+    }
+
+    // preferable to reduce the quality instead of reducing the max height and width
+    // height and width of 750 with quality of 1 is about 420 KB
+    // height and width of 1500 with quality of 0.5 is about 240 KB and looks better
+    // also briefly experimented with height and width of 2000 but 1500 seems preferable
+    // currently on this screen and the marker modal, the image is displayed as a square such that the width is equal to the device width
+    // this is for design consistency and the image is cropped when displayed such that parts of the image are never used if it is not originally a square
+    // this means that unnecessary data is being stored in the database so it may be preferable to crop the image before uploading
+    const selectImage = () => {
+        const options = {
+            // maxWidth: 1500,
+            // maxHeight: 1500,
+            // storageOptions: {
+            //     skipBackup: true,
+            //     path: 'images',
+            // },
+            // quality: 0.2,
+            width: 300,
+            height: 400,
+            cropping: true,
+        }
+        // ImagePicker.openPicker(options, (response) => {
+        //     if (response.didCancel) {
+        //         console.log('User cancelled image picker')
+        //     } else if (response.error) {
+        //         console.log('ImagePicker Error: ', response.error)
+        //     } else {
+        //         const source = response.assets[0].uri
+        //         setImage(source)
+        //         setImageUpdated(true)
+        //     }
+        // })
+        ImagePicker.openPicker({
+            width: 1500,
+            height: 1500,
+            cropping: true,
+            compressImageQuality: 0.5,
+        })
+            .then((image) => {
+                console.log(image)
+                setImage(image.path)
+                setImageUpdated(true)
+            })
+            .catch((error) => {
+                console.log(error)
+            })
+    }
+
+    const takePhoto = () => {
+        // const options = {
+        //     maxWidth: 1000,
+        //     maxHeight: 1000,
+        //     storageOptions: {
+        //         skipBackup: true,
+        //         path: 'images',
+        //     },
+        //     // quality: 0.5,
+        // }
+        // ImagePicker.launchCamera(options, (response) => {
+        //     if (response.didCancel) {
+        //         console.log('User cancelled image picker')
+        //     } else if (response.error) {
+        //         console.log('ImagePicker Error: ', response.error)
+        //     } else {
+        //         const source = response.assets[0].uri
+        //         setImage(source)
+        //         setImageUpdated(true)
+        //     }
+        // })
+        ImagePicker.openCamera({
+            width: 1500,
+            height: 1500,
+            cropping: true,
+            compressImageQuality: 0.5,
+        })
+            .then((image) => {
+                console.log(image)
+                setImage(image.path)
+                setImageUpdated(true)
+            })
+            .catch((error) => {
+                console.log(error)
+            })
+    }
+
+    const uploadImage = async () => {
+        const uri = image
+        const filename = uri.substring(uri.lastIndexOf('/') + 1)
+        const uploadUri =
+            Platform.OS === 'ios' ? uri.replace('file://', '') : uri
+        setUploading(true)
+        setTransferred(0)
+        const task = storage().ref(filename).putFile(uploadUri)
+        // set progress state
+        task.on('state_changed', (snapshot) => {
+            setTransferred(snapshot.bytesTransferred / snapshot.totalBytes)
+        })
+        try {
+            await task
+        } catch (e) {
+            console.error(e)
+        }
+        setUploading(false)
+        return filename
+    }
+
+    const resetForm = () => {
+        setTitle('')
+        setDescription('')
+        setIsTrash(false)
+        setIsRefundables(false)
+        setIsCompost(false)
+        setIsRecyclables(false)
+        setImage(null)
+        setMissing([])
+        setChooseOneWarning(false)
+        setPosition(null)
+        setCurrentLocationButtonPressed(false)
+    }
+
+    const handleFormSubmit = useCallback(
+        _throttle(() => {
+            setMissing([])
+            setChooseOneWarning(false)
+            // You can perform form submission logic here
+            if (!title || !image || !position) {
+                if (!title) {
+                    setMissing((prevMissing) => [...prevMissing, 'title'])
+                }
+                if (!image) {
+                    setMissing((prevMissing) => [...prevMissing, 'image'])
+                }
+                if (!position) {
+                    setMissing((prevMissing) => [...prevMissing, 'position'])
+                }
+                return
+            }
+            if (!isTrash && !isRefundables && !isCompost && !isRecyclables) {
+                setChooseOneWarning(true)
+                return
+            }
+            if (props.selectedMarker) {
+                // if editing a marker and the image was changed, need to delete and upload new image
+                if (imageUpdated) {
+                    storage()
+                        .ref(props.selectedMarker.image)
+                        .delete()
+                        .then(() => {
+                            console.log('Original image deleted!')
+                            return uploadImage()
+                        })
+                        .then((filename) => {
+                            console.log('new image uploaded')
+                            return GeoFirestore.collection('markers')
+                                .doc(props.selectedMarker.id)
+                                .update({
+                                    title: title,
+                                    description: description,
+                                    isTrash: isTrash,
+                                    isRefundables: isRefundables,
+                                    isCompost: isCompost,
+                                    isRecyclables: isRecyclables,
+                                    image: filename,
+                                })
+                        })
+                        .then(() => {
+                            Alert.alert(
+                                'Marker Updated!',
+                                '',
+                                [
+                                    {
+                                        text: 'OK',
+                                        onPress: () => navigation.pop(),
+                                    },
+                                ],
+                                { onDismiss: () => navigation.pop() }
+                            )
+                        })
+                        .catch((error) => {
+                            console.log(error)
+                        })
+
+                    // if editing a marker and the image was not changed, just update the marker
+                } else {
+                    GeoFirestore.collection('markers')
+                        .doc(props.selectedMarker.id)
+                        .update({
+                            title: title,
+                            description: description,
+                            isTrash: isTrash,
+                            isRefundables: isRefundables,
+                            isCompost: isCompost,
+                            isRecyclables: isRecyclables,
+                        })
+                        .then(() => {
+                            Alert.alert(
+                                'Marker Updated!',
+                                '',
+                                [
+                                    {
+                                        text: 'OK',
+                                        onPress: () => navigation.pop(),
+                                    },
+                                ],
+                                { onDismiss: () => navigation.pop() }
+                            )
+                        })
+                        .catch((error) => {
+                            console.log(error)
+                        })
+                }
+            } else {
+                uploadImage()
+                    .then((filename) => {
+                        timeCreated = firestore.Timestamp.fromDate(new Date())
+                        return GeoFirestore.collection('markers').add({
+                            title: title,
+                            description: description,
+                            coordinates: new firestore.GeoPoint(
+                                position.latitude,
+                                position.longitude
+                            ),
+                            userId: props.user.uid,
+                            username: props.user.username,
+                            isTrash: isTrash,
+                            isRefundables: isRefundables,
+                            isCompost: isCompost,
+                            isRecyclables: isRecyclables,
+                            image: filename,
+                            createdAt: timeCreated,
+                            lastSeen: timeCreated,
+                        })
+                    })
+                    .then((docRef) => {
+                        return docRef.get()
+                    })
+                    .then((documentSnapshot) => {
+                        // props.setMarkers((prevMarkers) => [
+                        //     ...prevMarkers,
+                        //     { ...documentSnapshot.data(), id: documentSnapshot.id },
+                        // ])
+                        return firestore()
+                            .collection('logs')
+                            .add({
+                                markerId: documentSnapshot.id,
+                                body: 'Marker added!',
+                                createdAt: firestore.Timestamp.fromDate(
+                                    new Date()
+                                ),
+                                found: true,
+                                username: props.user.username,
+                            })
+                    })
+                    .then(() => {
+                        return firestore()
+                            .collection('users')
+                            .doc(props.user.uid)
+                            .update({
+                                numCreatedMarkers:
+                                    props.user.numCreatedMarkers + 1,
+                                numCreatedLogs: props.user.numCreatedLogs + 1,
+                            })
+                    })
+                    .then(() => {
+                        props.setUser({
+                            ...props.user,
+                            numCreatedLogs: props.user.numCreatedLogs + 1,
+                            numCreatedMarkers: props.user.numCreatedMarkers + 1,
+                        })
+                        Alert.alert(
+                            'Marker added!',
+                            '',
+                            [{ text: 'OK', onPress: () => navigation.pop() }],
+                            { onDismiss: () => navigation.pop() }
+                        )
+                    })
+                    .catch((error) => {
+                        console.log(error)
+                    })
+            }
+        }, 5000),
+        []
+    )
+
     if (props.user) {
-      return (
-        
-        // form to add a marker
-        <View style={styles.container}>
-            <Modal
-                animationType="slide"
-                transparent={false}
-                visible={modalVisible}
-                onRequestClose={() => {
-                    Alert.alert('Modal has been closed.');
-                    setModalVisible(!modalVisible);
-                }}
-            >
-                <View style={{ flex: 1 }}>
-                    {position &&
-                    <MapView
-                        provider={PROVIDER_GOOGLE}
-                        style={styles.map}
-                        initialRegion={position}
-                        showsUserLocation={true}
-                        showsMyLocationButton={true}
-                        followsUserLocation={true}
-                        showsCompass={true}
-                        scrollEnabled={true}
-                        zoomEnabled={true}
-                        pitchEnabled={true}
-                        rotateEnabled={true}
+        return (
+            // form to add a marker
+            <ScrollView style={styles.container}>
+                <SelectLocationModal
+                    modalVisible={modalVisible}
+                    setModalVisible={setModalVisible}
+                    position={position}
+                    setPosition={setPosition}
+                />
+                {/* <Appbar.Header>
+                    <Appbar.Content
+                        title="Add a marker"
+                        titleStyle={styles.title}
+                    />
+                </Appbar.Header> */}
+                <Divider />
+                <View style={styles.imageSelectText}>
+                    <Text variant="titleMedium">Choose an image</Text>
+                    {image && <Icon name="check" size={20} color={'green'} />}
+                </View>
+                <View style={styles.imageSelectBar}>
+                    <Button
+                        onPress={selectImage}
+                        icon="image-area"
+                        mode="outlined"
                     >
-                        <Marker
-                            draggable
-                            coordinate={position}
-                            onDragEnd={e => {
-                                setPosition({...e.nativeEvent.coordinate, latitudeDelta: 0.0421, longitudeDelta: 0.0421});
-                                console.log(e.nativeEvent.coordinate);
+                        Open Gallery
+                    </Button>
+                    <Button onPress={takePhoto} icon="camera" mode="outlined">
+                        Open Camera
+                    </Button>
+                </View>
+
+                {image !== null ? (
+                    <Image
+                        source={{
+                            uri: image,
+                        }}
+                        style={styles.imageBox}
+                    />
+                ) : null}
+
+                <Text variant="titleMedium" style={styles.text}>
+                    Write a descriptive title
+                </Text>
+                <TextInput
+                    style={styles.input}
+                    label="Title"
+                    mode="outlined"
+                    value={title}
+                    onChangeText={setTitle}
+                    maxLength={titleMaxLength}
+                />
+
+                <Text style={styles.textLimit}>
+                    {title.length}/{titleMaxLength}
+                </Text>
+                <Text variant="titleMedium" style={styles.text}>
+                    (Optional) Write a description
+                </Text>
+                <TextInput
+                    style={styles.input}
+                    mode="outlined"
+                    label="Description"
+                    value={description}
+                    onChangeText={setDescription}
+                    multiline={true}
+                    numberOfLines={4}
+                    descriptionMaxLength={descriptionMaxLength}
+                />
+                <Text style={styles.textLimit}>
+                    {description.length}/{descriptionMaxLength}
+                </Text>
+                <Text variant="titleMedium" style={styles.text}>
+                    Select all the garbage categories that apply
+                </Text>
+                <View style={styles.garbageCategoriesContainer}>
+                    <View style={styles.garbageCategory}>
+                        <View style={styles.garbageCategoryText}>
+                            <Text variant="labelLarge">Trash </Text>
+                            <Icon name="trash-can" size={16} color="gray" />
+                        </View>
+                        <Checkbox
+                            disabled={false}
+                            value={isTrash}
+                            status={isTrash ? 'checked' : 'unchecked'}
+                            onPress={() => {
+                                setIsTrash(!isTrash)
                             }}
                         />
-                    </MapView>
-                    }
-                    <Button title="Done" onPress={() => setModalVisible(!modalVisible)} />
+                    </View>
+                    <View style={styles.garbageCategory}>
+                        <View style={styles.garbageCategoryText}>
+                            <Text variant="labelLarge">Refundables </Text>
+                            <Icon
+                                name="bottle-soda"
+                                size={16}
+                                color="darkblue"
+                            />
+                        </View>
+                        <Checkbox
+                            disabled={false}
+                            value={isRefundables}
+                            status={isRefundables ? 'checked' : 'unchecked'}
+                            onPress={() => {
+                                setIsRefundables(!isRefundables)
+                            }}
+                        />
+                    </View>
+                    <View style={styles.garbageCategory}>
+                        <View style={styles.garbageCategoryText}>
+                            <Text variant="labelLarge">Recyclables </Text>
+                            <Icon name="recycle" size={16} color="#5592b4" />
+                        </View>
+                        <Checkbox
+                            disabled={false}
+                            value={isRecyclables}
+                            status={isRecyclables ? 'checked' : 'unchecked'}
+                            onPress={() => {
+                                setIsRecyclables(!isRecyclables)
+                            }}
+                        />
+                    </View>
+                    <View style={styles.garbageCategory}>
+                        <View style={styles.garbageCategoryText}>
+                            <Text variant="labelLarge">Compost </Text>
+                            <Icon name="leaf" size={16} color="green" />
+                        </View>
+                        <Checkbox
+                            disabled={false}
+                            value={isCompost}
+                            status={isCompost ? 'checked' : 'unchecked'}
+                            onPress={() => {
+                                setIsCompost(!isCompost)
+                            }}
+                        />
+                    </View>
                 </View>
-                {/* <Text>Modal</Text> */}
-            </Modal>
-            <TextInput
-                style={styles.input}
-                placeholder="Title"
-                value={title}
-                onChangeText={setTitle}
-            />
-            <TextInput
-                style={styles.input}
-                placeholder="Description"
-                value={description}
-                onChangeText={setDescription}
-                multiline={true}
-            />
-            <Text>Trash</Text>
-            <CheckBox
-              disabled={false}
-              value={isTrash}
-              onValueChange={(newValue) => setIsTrash(newValue)}
-            />
-            <Text>Bottles</Text>
-            <CheckBox
-              disabled={false}
-              value={isBottles}
-              onValueChange={(newValue) => setIsBottles(newValue)}
-            />
-            <Text>Compost</Text>
-            <CheckBox
-              disabled={false}
-              value={isCompost}
-              onValueChange={(newValue) => setIsCompost(newValue)}
-            />
-            {chooseOneWarning && 
-              <Text>Please select at least one garbage category</Text>
-            }
-            <Button title="Select Location" onPress={() => setModalVisible(true)} />
-            <Button title="Submit" onPress={handleFormSubmit} />
-            {missing.length > 0 && 
-                <Text>Missing Fields: {missing.join(', ')}</Text>
-            }
 
-        </View>
-      )
-    }
-    else {
-      
-      return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text>Sign in to add a marker</Text>
-          <Button title="Sign In" onPress={() => navigation.navigate('Profile')} />
-          <GoogleSignIn />
-        </View>
-      )
-    }
-  }
+                <View style={styles.imageSelectText}>
+                    <Text variant="titleMedium">Choose a location</Text>
+                    {position && (
+                        <Icon name="check" size={20} color={'green'} />
+                    )}
+                </View>
+                <View style={styles.imageSelectBar}>
+                    <Button
+                        onPress={() => {
+                            setModalVisible(true)
+                            setCurrentLocationButtonPressed(false)
+                        }}
+                        mode="outlined"
+                        icon={'map-outline'}
+                        disabled={props.selectedMarker ? true : false}
+                    >
+                        Open Map
+                    </Button>
+                    <Button
+                        onPress={() => {
+                            useCurrentLocation()
+                            // setLocationLoading(true)
+                        }}
+                        mode={
+                            currentLocationButtonPressed
+                                ? 'contained'
+                                : 'outlined'
+                        }
+                        icon={'crosshairs-gps'}
+                        disabled={props.selectedMarker ? true : false}
+                        // loading={locationLoading}
+                    >
+                        Use Current Location
+                    </Button>
+                </View>
 
-  const styles = StyleSheet.create({
+                {missing.length > 0 && (
+                    <Text style={styles.warning} variant="labelLarge">
+                        Missing Fields: {missing.join(', ')}
+                    </Text>
+                )}
+                {chooseOneWarning && (
+                    <Text style={styles.warning} variant="labelLarge">
+                        Please select at least one garbage category
+                    </Text>
+                )}
+                <Divider />
+                <View style={styles.submitBar}>
+                    <Button
+                        onPress={() => resetForm()}
+                        disabled={props.selectedMarker ? true : false}
+                    >
+                        Reset Form
+                    </Button>
+                    <Button onPress={handleFormSubmit} mode="contained">
+                        Submit
+                    </Button>
+                </View>
+                {uploading && (
+                    <View>
+                        <ProgressBar
+                            progress={transferred}
+                            style={styles.progressBar}
+                        />
+                    </View>
+                )}
+            </ScrollView>
+        )
+    }
+}
+
+const styles = StyleSheet.create({
     container: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      padding: 20,
-    },
-    input: {
-      width: '100%',
-      height: 40,
-      borderWidth: 1,
-      borderColor: '#ccc',
-      borderRadius: 8,
-      paddingHorizontal: 10,
-      marginBottom: 10,
-    },
-    centeredView: {
         flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginTop: 22,
-      },
-    modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 35,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-        width: 0,
-        height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-    },
-    button: {
-    borderRadius: 20,
-    padding: 10,
-    elevation: 2,
-    },
-    buttonOpen: {
-    backgroundColor: '#F194FF',
-    },
-    buttonClose: {
-    backgroundColor: '#2196F3',
-    },
-    textStyle: {
-    color: 'white',
-    fontWeight: 'bold',
-    textAlign: 'center',
-    },
-    modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
+        marginBottom: 0,
     },
     map: {
-        flex:1
+        flex: 1,
     },
-  });
+    imageBox: {
+        width: deviceWidth,
+        height: deviceWidth,
+        // alignSelf: 'center',
+        marginBottom: 10,
+    },
+    input: {
+        marginLeft: 20,
+        marginRight: 20,
+    },
+    textLimit: {
+        alignSelf: 'flex-end',
+        marginRight: 20,
+        marginBottom: 10,
+    },
+    progressBar: {
+        marginBottom: 10,
+        alignSelf: 'center',
+        marginLeft: 20,
+        marginRight: 20,
+    },
 
-  
+    imageSelectBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+        marginLeft: 20,
+        marginRight: 20,
+    },
+
+    submitBar: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginBottom: 10,
+        marginLeft: 20,
+        marginRight: 20,
+        marginTop: 10,
+    },
+    imageSelectText: {
+        flexDirection: 'row',
+        marginTop: 10,
+        marginBottom: 10,
+        marginLeft: 20,
+    },
+    text: {
+        marginLeft: 20,
+    },
+    title: {
+        alignItems: 'center',
+        fontSize: 25,
+    },
+    garbageCategoriesContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        // marginLeft: 20,
+        // marginRight: 20,
+        margin: 10,
+    },
+    garbageCategory: {
+        alignItems: 'center',
+    },
+    garbageCategoryText: {
+        flexDirection: 'row',
+    },
+    warning: {
+        color: 'red',
+        marginLeft: 20,
+    },
+    submitText: {
+        fontSize: 20,
+    },
+})

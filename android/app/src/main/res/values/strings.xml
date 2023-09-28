@@ -2,4 +2,7 @@
   <string name="app_name">JapanGarbageMap</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
+  <string name="facebook_app_id">1023091715485927</string>
+<string name="fb_login_protocol_scheme">fb1234</string>
+<string name="facebook_client_token">a3b363b3f6fff5e1ad07ddc4781c26b4</string>
 </resources>

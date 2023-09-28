@@ -1,29 +1,65 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-
-
+import React from 'react'
+import { View, StyleSheet } from 'react-native'
+import { Avatar, Text, Divider } from 'react-native-paper'
 
 export function LogEntry(props) {
+    const options = { year: 'numeric', month: 'long', day: 'numeric' }
     return (
-      <View style={styles.container}>
-        <Text>{props.log.createdAt.toDate().toString()}</Text>
-        <Text>{props.log.found.toString()}</Text>
-        <Text>{props.log.username}</Text>
-        <Text>{props.log.body}</Text>
-      </View>
+        <>
+            <Divider />
+            <View style={styles.container}>
+                <Avatar.Text
+                    size={40}
+                    label={props.log.username.charAt(0)}
+                    // style={{ alignSelf: 'center', margin: 10 }}
+                />
+                <View>
+                    <Text variant="titleMedium">{props.log.username}</Text>
+                    <View style={styles.row}>
+                        {props.log.found ? (
+                            <Text style={styles.found} variant="titleSmall">
+                                Found{' '}
+                            </Text>
+                        ) : (
+                            <Text style={styles.DNF} variant="titleSmall">
+                                DNF{' '}
+                            </Text>
+                        )}
+
+                        <Text variant="titleSmall">
+                            on{' '}
+                            {props.log.createdAt
+                                .toDate()
+                                .toLocaleDateString(undefined, options)}{' '}
+                        </Text>
+                    </View>
+
+                    <Text variant="bodyMedium">{props.log.body}</Text>
+                </View>
+            </View>
+            <Divider />
+        </>
     )
-  }
-
-
+}
 
 const styles = StyleSheet.create({
     container: {
-        borderWidth: 1,
+        flexDirection: 'row',
+        // borderWidth: 1,
         // left: 10,
         // right: 10,
         padding: 10,
-        borderRadius: 10,
-
-    }
-    
-});
+        // borderRadius: 10,
+        gap: 10,
+    },
+    row: {
+        flexDirection: 'row',
+        // alignItems: 'center',
+    },
+    found: {
+        color: 'green',
+    },
+    DNF: {
+        color: 'red',
+    },
+})

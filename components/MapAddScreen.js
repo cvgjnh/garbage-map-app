@@ -4,40 +4,35 @@ import { NavigationContainer } from '@react-navigation/native'
 import { createStackNavigator } from '@react-navigation/stack'
 import { MapScreen } from './MapScreen'
 import { AddScreen } from './AddScreen'
-import { ProfileMainScreen } from './ProfileMainScreen'
 
 const Stack = createStackNavigator()
 
-export function ProfileScreen(props) {
-    const [selectedMarker, setSelectedMarker] = useState(null)
-
+export function MapAddScreen(props) {
     return (
         <Stack.Navigator>
             <Stack.Screen
-                name="Profile Main"
+                name="Map"
                 children={() => (
-                    <ProfileMainScreen
+                    <MapScreen
                         user={props.user}
                         setUser={props.setUser}
-                        onAuthStateChanged={props.onAuthStateChanged}
-                        selectedMarker={selectedMarker}
-                        setSelectedMarker={setSelectedMarker}
+                        markers={props.markers}
                         setMarkers={props.setMarkers}
                     />
                 )}
                 options={{ headerShown: false }}
             />
             <Stack.Screen
-                name="Update"
+                name="Add"
                 children={() => (
                     <AddScreen
                         user={props.user}
                         setUser={props.setUser}
+                        markers={props.markers}
                         setMarkers={props.setMarkers}
-                        selectedMarker={selectedMarker}
                     />
                 )}
-                options={{ title: 'Update Marker' }}
+                options={{ title: 'Add Marker' }}
             />
         </Stack.Navigator>
     )

@@ -1,4 +1,11 @@
-import { StyleSheet, View, Alert, Image, Dimensions } from 'react-native'
+import {
+    StyleSheet,
+    View,
+    Alert,
+    Image,
+    Dimensions,
+    Linking,
+} from 'react-native'
 import {
     Button,
     Text,
@@ -89,7 +96,19 @@ export function AddScreen(props) {
     const useCurrentLocation = async () => {
         let { status } = await Location.requestForegroundPermissionsAsync()
         if (status !== 'granted') {
-            setErrorMsg('Permission to access location was denied')
+            Alert.alert(
+                'Please enable location permissions in your settings',
+                'This feature requires location permissions to function.',
+                [
+                    {
+                        text: 'Not now',
+                    },
+                    {
+                        text: 'OK',
+                        onPress: () => Linking.openSettings(),
+                    },
+                ]
+            )
             return
         }
 

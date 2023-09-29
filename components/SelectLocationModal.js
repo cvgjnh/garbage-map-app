@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native'
+import { Alert, StyleSheet, View, Linking } from 'react-native'
 import {
     Button,
     ActivityIndicator,
@@ -19,11 +19,18 @@ export function SelectLocationModal(props) {
     const [mapType, setMapType] = useState('hybrid')
     const mapRef = useRef(null)
 
+    const defaultRegion = {
+        latitude: 49.2827,
+        longitude: -123.1207,
+        latitudeDelta: 0.0421,
+        longitudeDelta: 0.001,
+    }
+
     useEffect(() => {
-        const center = async () => {
+        const setInitialLocation = async () => {
             let { status } = await Location.requestForegroundPermissionsAsync()
             if (status !== 'granted') {
-                setErrorMsg('Permission to access location was denied')
+                props.setPosition(defaultRegion)
                 return
             }
 
@@ -36,7 +43,7 @@ export function SelectLocationModal(props) {
             })
         }
         if (props.modalVisible && props.position === null) {
-            center()
+            setInitialLocation()
         }
     }, [props.modalVisible])
 
@@ -44,7 +51,19 @@ export function SelectLocationModal(props) {
         console.log('center on user')
         let { status } = await Location.requestForegroundPermissionsAsync()
         if (status !== 'granted') {
-            console.log('Permission to access location was denied')
+            Alert.alert(
+                'Please enable location permissions in your settings',
+                'This feature requires location permissions to function.',
+                [
+                    {
+                        text: 'Not now',
+                    },
+                    {
+                        text: 'OK',
+                        onPress: () => Linking.openSettings(),
+                    },
+                ]
+            )
             return
         }
 

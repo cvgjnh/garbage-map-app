@@ -1,4 +1,4 @@
-import { StyleSheet, View, Image } from 'react-native'
+import { StyleSheet, View, Image, Alert, Linking } from 'react-native'
 import { Text, Button, FAB } from 'react-native-paper'
 import React, { useState, useEffect, useRef } from 'react'
 import MapView from 'react-native-maps'
@@ -29,11 +29,30 @@ export function MapScreen(props) {
     const mapRef = useRef(null)
     const navigation = useNavigation()
 
+    const defaultRegion = {
+        latitude: 49.2827,
+        longitude: -123.1207,
+        latitudeDelta: 0.0421,
+        longitudeDelta: 0.001,
+    }
+
     async function centerOnUser() {
         console.log('center on user')
         let { status } = await Location.requestForegroundPermissionsAsync()
         if (status !== 'granted') {
-            console.log('Permission to access location was denied')
+            Alert.alert(
+                'Please enable location permissions in your settings',
+                'This feature requires location permissions to function.',
+                [
+                    {
+                        text: 'Not now',
+                    },
+                    {
+                        text: 'OK',
+                        onPress: () => Linking.openSettings(),
+                    },
+                ]
+            )
             return
         }
 
@@ -54,17 +73,27 @@ export function MapScreen(props) {
     // issue with this not always executing - test on production build as well
     // handle the case where the user denies location permissions
     useEffect(() => {
-        const centerOnUser = async () => {
+        const setInitialLocation = async () => {
             console.log('getting position...')
             let { status } = await Location.requestForegroundPermissionsAsync()
             if (status !== 'granted') {
-                console.log('Permission to access location was denied')
+                Alert.alert(
+                    'Please enable location permissions in your settings',
+                    'This app requires location permissions to function properly.',
+                    [
+                        {
+                            text: 'Not now',
+                        },
+                        {
+                            text: 'OK',
+                            onPress: () => Linking.openSettings(),
+                        },
+                    ]
+                )
+                setCurrentRegion(defaultRegion)
                 return
             }
-            console.log('permissions granted')
-            // could changing it to getLastKnownPositionAsync() help with the issue of the map sometimes not loading?
             let location = await Location.getLastKnownPositionAsync({})
-            console.log('location: ', location)
             setCurrentRegion({
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
@@ -73,12 +102,8 @@ export function MapScreen(props) {
             })
         }
 
-        centerOnUser()
+        setInitialLocation()
     }, [])
-
-    // useEffect(() => {
-    //     if (initialRegion) updateMarkers(initialRegion)
-    // }, [initialRegion])
 
     function handleMarkerPress(marker) {
         // if the info box is already open for this marker, close it
@@ -108,6 +133,10 @@ export function MapScreen(props) {
             .collection('markers')
             .doc(selectedMarker.id)
             .onSnapshot((documentSnapshot) => {
+                if (!documentSnapshot.exists) {
+                    setSelectedMarker(null)
+                    return
+                }
                 setSelectedMarker({
                     ...documentSnapshot.data(),
                     id: documentSnapshot.id,

@@ -1,5 +1,5 @@
 import { StyleSheet, View, Image, Alert, Linking } from 'react-native'
-import { Text, Button, FAB } from 'react-native-paper'
+import { Text, Button, FAB, useTheme } from 'react-native-paper'
 import React, { useState, useEffect, useRef } from 'react'
 import MapView from 'react-native-maps'
 import { Marker, Callout, PROVIDER_GOOGLE } from 'react-native-maps'
@@ -35,6 +35,8 @@ export function MapScreen(props) {
         latitudeDelta: 0.0421,
         longitudeDelta: 0.001,
     }
+
+    const theme = useTheme()
 
     async function centerOnUser() {
         console.log('center on user')
@@ -380,6 +382,7 @@ export function MapScreen(props) {
                                             handleMarkerPress(marker)
                                         }}
                                         tappable={false}
+                                        pinColor={theme.colors.primary}
                                     >
                                         {/* <Image
                                             source={require('../assets/trash_test.png')}

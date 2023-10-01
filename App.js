@@ -33,7 +33,29 @@ export default function App() {
     const colorScheme = useColorScheme()
 
     const paperTheme =
-        colorScheme === 'dark' ? { ...MD3DarkTheme } : { ...MD3LightTheme }
+        colorScheme === 'dark'
+            ? {
+                  ...MD3DarkTheme,
+                  colors: {
+                      ...MD3DarkTheme.colors,
+                      primary: '#96a683',
+                      onPrimary: '#433124',
+                      primaryContainer: '#2e3a2f',
+                      onPrimaryContainer: '#8e7b6e',
+                      surface: '#2e3a2f',
+                  },
+              }
+            : {
+                  ...MD3LightTheme,
+                  colors: {
+                      ...MD3LightTheme.colors,
+                      primary: '#5e7161',
+                      onPrimary: '#f6efe7',
+                      primaryContainer: '#79695d',
+                      onPrimaryContainer: '#433124',
+                      surface: '#c0cfb9',
+                  },
+              }
 
     // const paperTheme = {
     //     ...MD3LightTheme,
@@ -177,3 +199,4 @@ export default function App() {
         </PaperProvider>
     )
 }
+//i love you harry hu

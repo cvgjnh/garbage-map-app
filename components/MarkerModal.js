@@ -16,6 +16,7 @@ import {
     Menu,
     Appbar,
     IconButton,
+    Surface,
 } from 'react-native-paper'
 import React, { useState, useEffect } from 'react'
 import firestore from '@react-native-firebase/firestore'
@@ -169,124 +170,130 @@ export function MarkerModal(props) {
                             titleStyle={styles.title}
                         />
                     </Appbar.Header>
-                    <ScrollView>
-                        {imageURL !== null ? (
-                            <Image
-                                source={{ uri: imageURL }}
-                                style={styles.imageBox}
-                            />
-                        ) : (
-                            <ActivityIndicator
-                                style={{
-                                    alignSelf: 'center',
-                                    padding: 10,
-                                }}
-                                size="large"
-                            />
-                        )}
-                        <View style={styles.titleRow}>
-                            <Text variant="headlineSmall">
-                                {props.selectedMarker &&
-                                    props.selectedMarker.title}
-                            </Text>
-                            <Menu
-                                visible={menuVisible}
-                                onDismiss={() => {
-                                    setMenuVisible(false)
-                                }}
-                                anchor={
-                                    <IconButton
-                                        onPress={() => {
-                                            setMenuVisible(true)
-                                        }}
-                                        icon="dots-vertical"
-                                    />
-                                }
-                            >
-                                <Menu.Item
-                                    onPress={() => {
-                                        setReportDialogOpen(true)
+                    <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                        <Surface style={{ flex: 1 }}>
+                            {imageURL !== null ? (
+                                <Image
+                                    source={{ uri: imageURL }}
+                                    style={styles.imageBox}
+                                />
+                            ) : (
+                                <ActivityIndicator
+                                    style={{
+                                        alignSelf: 'center',
+                                        padding: 10,
+                                    }}
+                                    size="large"
+                                />
+                            )}
+                            <View style={styles.titleRow}>
+                                <Text variant="headlineSmall">
+                                    {props.selectedMarker &&
+                                        props.selectedMarker.title}
+                                </Text>
+                                <Menu
+                                    visible={menuVisible}
+                                    onDismiss={() => {
                                         setMenuVisible(false)
                                     }}
-                                    title="Report"
-                                />
-                            </Menu>
-                        </View>
-                        <View style={styles.row}>
-                            {props.selectedMarker?.isTrash && (
-                                <Icon name="trash-can" size={24} color="gray" />
-                            )}
-                            {props.selectedMarker?.isRefundables && (
-                                <Icon
-                                    name="bottle-soda"
-                                    size={24}
-                                    color="darkblue"
-                                />
-                            )}
-                            {props.selectedMarker?.isRecyclables && (
-                                <Icon
-                                    name="recycle"
-                                    size={24}
-                                    color="#5592b4"
-                                />
-                            )}
-                            {props.selectedMarker?.isCompost && (
-                                <Icon name="leaf" size={24} color="green" />
-                            )}
-                        </View>
-
-                        <View style={styles.buttonRow}>
-                            <Button
-                                mode="contained"
-                                style={{ flex: 1 }}
-                                onPress={() => {
-                                    openMap(
-                                        props.selectedMarker.coordinates
-                                            .latitude,
-                                        props.selectedMarker.coordinates
-                                            .longitude
-                                    )
-                                }}
-                            >
-                                Directions
-                            </Button>
-                            <Button
-                                mode="contained"
-                                style={{ flex: 1 }}
-                                onPress={() => {
-                                    if (!props.user) {
-                                        navigation.navigate('Profile')
-                                        props.setModalVisible(false)
-                                        return
+                                    anchor={
+                                        <IconButton
+                                            onPress={() => {
+                                                setMenuVisible(true)
+                                            }}
+                                            icon="dots-vertical"
+                                        />
                                     }
+                                >
+                                    <Menu.Item
+                                        onPress={() => {
+                                            setReportDialogOpen(true)
+                                            setMenuVisible(false)
+                                        }}
+                                        title="Report"
+                                    />
+                                </Menu>
+                            </View>
+                            <View style={styles.row}>
+                                {props.selectedMarker?.isTrash && (
+                                    <Icon
+                                        name="trash-can"
+                                        size={24}
+                                        color="gray"
+                                    />
+                                )}
+                                {props.selectedMarker?.isRefundables && (
+                                    <Icon
+                                        name="bottle-soda"
+                                        size={24}
+                                        color="darkblue"
+                                    />
+                                )}
+                                {props.selectedMarker?.isRecyclables && (
+                                    <Icon
+                                        name="recycle"
+                                        size={24}
+                                        color="#5592b4"
+                                    />
+                                )}
+                                {props.selectedMarker?.isCompost && (
+                                    <Icon name="leaf" size={24} color="green" />
+                                )}
+                            </View>
 
-                                    setLogDialogOpen(true)
-                                }}
-                            >
-                                Log
-                            </Button>
-                        </View>
-                        <Text variant="bodyMedium" style={styles.text}>
-                            {props.selectedMarker &&
-                                props.selectedMarker.description}
-                        </Text>
+                            <View style={styles.buttonRow}>
+                                <Button
+                                    mode="contained"
+                                    style={{ flex: 1 }}
+                                    onPress={() => {
+                                        openMap(
+                                            props.selectedMarker.coordinates
+                                                .latitude,
+                                            props.selectedMarker.coordinates
+                                                .longitude
+                                        )
+                                    }}
+                                >
+                                    Directions
+                                </Button>
+                                <Button
+                                    mode="contained"
+                                    style={{ flex: 1 }}
+                                    onPress={() => {
+                                        if (!props.user) {
+                                            navigation.navigate('Profile')
+                                            props.setModalVisible(false)
+                                            return
+                                        }
 
-                        <Text variant="titleMedium" style={styles.text}>
-                            Logs
-                        </Text>
+                                        setLogDialogOpen(true)
+                                    }}
+                                >
+                                    Log
+                                </Button>
+                            </View>
+                            <Text variant="bodyMedium" style={styles.text}>
+                                {props.selectedMarker &&
+                                    props.selectedMarker.description}
+                            </Text>
 
-                        {selectedMarkerLogs.map((log) => {
-                            return <LogEntry key={log.id} log={log} />
-                        })}
-                        {moreLogsAvailable && (
-                            <Button
-                                onPress={() => {
-                                    getLogs()
-                                }}
-                            >
-                                Load More
-                            </Button>
-                        )}
+                            <Text variant="titleMedium" style={styles.text}>
+                                Logs
+                            </Text>
+
+                            {selectedMarkerLogs.map((log) => {
+                                return <LogEntry key={log.id} log={log} />
+                            })}
+                            {moreLogsAvailable && (
+                                <Button
+                                    onPress={() => {
+                                        getLogs()
+                                    }}
+                                >
+                                    Load More
+                                </Button>
+                            )}
+                        </Surface>
                     </ScrollView>
                 </Modal>
             </Portal>

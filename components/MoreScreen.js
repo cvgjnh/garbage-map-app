@@ -1,5 +1,12 @@
 import { StyleSheet, View, ScrollView, Alert } from 'react-native'
-import { Text, FAB, TextInput, Dialog, Button } from 'react-native-paper'
+import {
+    Text,
+    FAB,
+    TextInput,
+    Dialog,
+    Button,
+    Surface,
+} from 'react-native-paper'
 import React, { useState, useEffect } from 'react'
 import firestore from '@react-native-firebase/firestore'
 
@@ -25,37 +32,39 @@ export function MoreScreen(props) {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <Text variant="headlineMedium">About This App</Text>
-            <Text variant="bodyLarge">
-                This app was created and will be maintained as a not-for-profit
-                personal project by myself, Harry. {'\n\n'} I was inspired by
-                the lack of public garbage cans when I visited Japan, and
-                thought that maybe I could turn this idea into a fun project
-                which could also help others. The d{'\n'}
-            </Text>
-            <Text variant="headlineMedium">Feedback</Text>
-            <Text variant="bodyLarge">
-                Any feedback is greatly appreciated - I read every message!
-                Submit your suggestions, bug reports, or anything else you want
-                to say here.
-            </Text>
-            <TextInput
-                multiline={true}
-                value={textFeedback}
-                onChangeText={setTextFeedback}
-                numberOfLines={6}
-                mode="outlined"
-            />
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+            <Surface style={styles.container}>
+                <Text variant="headlineMedium">About This App</Text>
+                <Text variant="bodyLarge">
+                    This app was created and will be maintained as a
+                    not-for-profit personal project by myself, Harry. {'\n\n'} I
+                    was inspired by the lack of public garbage cans when I
+                    visited Japan, and thought that maybe I could turn this idea
+                    into a fun project which could also help others. The d{'\n'}
+                </Text>
+                <Text variant="headlineMedium">Feedback</Text>
+                <Text variant="bodyLarge">
+                    Any feedback is greatly appreciated - I read every message!
+                    Submit your suggestions, bug reports, or anything else you
+                    want to say here.
+                </Text>
+                <TextInput
+                    multiline={true}
+                    value={textFeedback}
+                    onChangeText={setTextFeedback}
+                    numberOfLines={6}
+                    mode="outlined"
+                />
 
-            {/* <FAB icon="send" onPress={() => submitFeedback()} /> */}
-            <Button
-                onPress={() => submitFeedback()}
-                style={styles.submitButton}
-                mode="contained"
-            >
-                Submit
-            </Button>
+                {/* <FAB icon="send" onPress={() => submitFeedback()} /> */}
+                <Button
+                    onPress={() => submitFeedback()}
+                    style={styles.submitButton}
+                    mode="contained"
+                >
+                    Submit
+                </Button>
+            </Surface>
         </ScrollView>
     )
 }

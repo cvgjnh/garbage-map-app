@@ -23,72 +23,76 @@ export function ProfileMainScreen(props) {
 
     if (props.user) {
         return (
-            <ScrollView>
-                <Surface style={styles.surface}>
-                    <Avatar.Text
-                        size={150}
-                        label={props.user.username.charAt(0)}
-                        style={{ alignSelf: 'center', margin: 10 }}
-                    />
-                    <View style={styles.row}>
-                        <Text variant="displaySmall">
-                            {props.user.username}
-                        </Text>
-
-                        <IconButton
-                            icon="account-edit"
-                            onPress={() => setEditingUsername(true)}
-                            size={32}
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <Surface style={{ flex: 1 }}>
+                    <Surface style={styles.surface}>
+                        <Avatar.Text
+                            size={150}
+                            label={props.user.username.charAt(0)}
+                            style={{ alignSelf: 'center', margin: 10 }}
                         />
-                    </View>
-                    <View style={styles.statisticsContainer}>
-                        <View style={styles.statistic}>
-                            <Text
-                                style={{ color: theme.colors.primary }}
-                                variant="headlineLarge"
-                            >
-                                {props.user.numCreatedMarkers}
+                        <View style={styles.row}>
+                            <Text variant="displaySmall">
+                                {props.user.username}
                             </Text>
-                            <Text variant="titleMedium">Markers Created</Text>
+
+                            <IconButton
+                                icon="account-edit"
+                                onPress={() => setEditingUsername(true)}
+                                size={32}
+                            />
                         </View>
-                        <View style={styles.statistic}>
-                            <Text
-                                style={{ color: theme.colors.primary }}
-                                variant="headlineLarge"
-                            >
-                                {props.user.numCreatedLogs}
-                            </Text>
-                            <Text variant="titleMedium">Logs Created</Text>
+                        <View style={styles.statisticsContainer}>
+                            <View style={styles.statistic}>
+                                <Text
+                                    style={{ color: theme.colors.primary }}
+                                    variant="headlineLarge"
+                                >
+                                    {props.user.numCreatedMarkers}
+                                </Text>
+                                <Text variant="titleMedium">
+                                    Markers Created
+                                </Text>
+                            </View>
+                            <View style={styles.statistic}>
+                                <Text
+                                    style={{ color: theme.colors.primary }}
+                                    variant="headlineLarge"
+                                >
+                                    {props.user.numCreatedLogs}
+                                </Text>
+                                <Text variant="titleMedium">Logs Created</Text>
+                            </View>
                         </View>
-                    </View>
+                    </Surface>
+
+                    <ChangeUsernameDialog
+                        user={props.user}
+                        setUser={props.setUser}
+                        editingUsername={editingUsername}
+                        setEditingUsername={setEditingUsername}
+                    />
+
+                    <CreatedMarkersList
+                        user={props.user}
+                        setUser={props.setUser}
+                        selectedMarker={props.selectedMarker}
+                        setSelectedMarker={props.setSelectedMarker}
+                    />
+
+                    <GoogleSignOut />
                 </Surface>
-
-                <ChangeUsernameDialog
-                    user={props.user}
-                    setUser={props.setUser}
-                    editingUsername={editingUsername}
-                    setEditingUsername={setEditingUsername}
-                />
-
-                <CreatedMarkersList
-                    user={props.user}
-                    setUser={props.setUser}
-                    selectedMarker={props.selectedMarker}
-                    setSelectedMarker={props.setSelectedMarker}
-                />
-
-                <GoogleSignOut />
             </ScrollView>
         )
     } else {
         return (
-            <View style={styles.container}>
+            <Surface style={styles.container}>
                 <Text variant="titleLarge" style={styles.centerText}>
                     Sign in or create an account to add map markers, write logs,
                     and view your profile!
                 </Text>
                 <GoogleSignIn />
-            </View>
+            </Surface>
         )
     }
 }
@@ -121,7 +125,7 @@ const styles = StyleSheet.create({
         padding: 20,
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 20,
+        gap: 30,
     },
     centerText: {
         textAlign: 'center',

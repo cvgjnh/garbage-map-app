@@ -32,7 +32,7 @@ export function MapAddScreen(props) {
                         setMarkers={props.setMarkers}
                     />
                 )}
-                options={{ title: 'Add Marker' }}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     )

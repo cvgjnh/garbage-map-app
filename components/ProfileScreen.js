@@ -37,7 +37,7 @@ export function ProfileScreen(props) {
                         selectedMarker={selectedMarker}
                     />
                 )}
-                options={{ title: 'Update Marker' }}
+                options={{ headerShown: false }}
             />
         </Stack.Navigator>
     )

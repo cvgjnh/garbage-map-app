@@ -14,6 +14,7 @@ import {
     Divider,
     Appbar,
     ProgressBar,
+    Surface,
 } from 'react-native-paper'
 import React, { useState, useEffect, useCallback } from 'react'
 import _throttle from 'lodash/throttle'
@@ -131,29 +132,6 @@ export function AddScreen(props) {
     // this is for design consistency and the image is cropped when displayed such that parts of the image are never used if it is not originally a square
     // this means that unnecessary data is being stored in the database so it may be preferable to crop the image before uploading
     const selectImage = () => {
-        const options = {
-            // maxWidth: 1500,
-            // maxHeight: 1500,
-            // storageOptions: {
-            //     skipBackup: true,
-            //     path: 'images',
-            // },
-            // quality: 0.2,
-            width: 300,
-            height: 400,
-            cropping: true,
-        }
-        // ImagePicker.openPicker(options, (response) => {
-        //     if (response.didCancel) {
-        //         console.log('User cancelled image picker')
-        //     } else if (response.error) {
-        //         console.log('ImagePicker Error: ', response.error)
-        //     } else {
-        //         const source = response.assets[0].uri
-        //         setImage(source)
-        //         setImageUpdated(true)
-        //     }
-        // })
         ImagePicker.openPicker({
             width: 1500,
             height: 1500,
@@ -171,26 +149,6 @@ export function AddScreen(props) {
     }
 
     const takePhoto = () => {
-        // const options = {
-        //     maxWidth: 1000,
-        //     maxHeight: 1000,
-        //     storageOptions: {
-        //         skipBackup: true,
-        //         path: 'images',
-        //     },
-        //     // quality: 0.5,
-        // }
-        // ImagePicker.launchCamera(options, (response) => {
-        //     if (response.didCancel) {
-        //         console.log('User cancelled image picker')
-        //     } else if (response.error) {
-        //         console.log('ImagePicker Error: ', response.error)
-        //     } else {
-        //         const source = response.assets[0].uri
-        //         setImage(source)
-        //         setImageUpdated(true)
-        //     }
-        // })
         ImagePicker.openCamera({
             width: 1500,
             height: 1500,
@@ -402,213 +360,234 @@ export function AddScreen(props) {
     if (props.user) {
         return (
             // form to add a marker
-            <ScrollView style={styles.container}>
-                <SelectLocationModal
-                    modalVisible={modalVisible}
-                    setModalVisible={setModalVisible}
-                    position={position}
-                    setPosition={setPosition}
-                />
-                {/* <Appbar.Header>
-                    <Appbar.Content
-                        title="Add a marker"
-                        titleStyle={styles.title}
+            <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+                <Surface style={styles.container}>
+                    <SelectLocationModal
+                        modalVisible={modalVisible}
+                        setModalVisible={setModalVisible}
+                        position={position}
+                        setPosition={setPosition}
                     />
-                </Appbar.Header> */}
-                <Divider />
-                <View style={styles.imageSelectText}>
-                    <Text variant="titleMedium">Choose an image</Text>
-                    {image && <Icon name="check" size={20} color={'green'} />}
-                </View>
-                <View style={styles.imageSelectBar}>
-                    <Button
-                        onPress={selectImage}
-                        icon="image-area"
-                        mode="outlined"
-                    >
-                        Open Gallery
-                    </Button>
-                    <Button onPress={takePhoto} icon="camera" mode="outlined">
-                        Open Camera
-                    </Button>
-                </View>
-
-                {image !== null ? (
-                    <Image
-                        source={{
-                            uri: image,
-                        }}
-                        style={styles.imageBox}
-                    />
-                ) : null}
-
-                <Text variant="titleMedium" style={styles.text}>
-                    Write a descriptive title
-                </Text>
-                <TextInput
-                    style={styles.input}
-                    label="Title"
-                    mode="outlined"
-                    value={title}
-                    onChangeText={setTitle}
-                    maxLength={titleMaxLength}
-                />
-
-                <Text style={styles.textLimit}>
-                    {title.length}/{titleMaxLength}
-                </Text>
-                <Text variant="titleMedium" style={styles.text}>
-                    (Optional) Write a description
-                </Text>
-                <TextInput
-                    style={styles.input}
-                    mode="outlined"
-                    label="Description"
-                    value={description}
-                    onChangeText={setDescription}
-                    multiline={true}
-                    numberOfLines={4}
-                    maxLength={descriptionMaxLength}
-                />
-                <Text style={styles.textLimit}>
-                    {description.length}/{descriptionMaxLength}
-                </Text>
-                <Text variant="titleMedium" style={styles.text}>
-                    Select all the garbage categories that apply
-                </Text>
-                <View style={styles.garbageCategoriesContainer}>
-                    <View style={styles.garbageCategory}>
-                        <View style={styles.garbageCategoryText}>
-                            <Text variant="labelLarge">Trash </Text>
-                            <Icon name="trash-can" size={16} color="gray" />
-                        </View>
-                        <Checkbox
-                            disabled={false}
-                            value={isTrash}
-                            status={isTrash ? 'checked' : 'unchecked'}
+                    <Appbar.Header>
+                        <Appbar.BackAction
                             onPress={() => {
-                                setIsTrash(!isTrash)
+                                navigation.pop()
                             }}
                         />
+                        <Appbar.Content
+                            title={
+                                props.selectedMarker
+                                    ? 'Update Marker'
+                                    : 'Add Marker'
+                            }
+                            titleStyle={styles.title}
+                        />
+                    </Appbar.Header>
+                    <Divider />
+                    <View style={styles.imageSelectText}>
+                        <Text variant="titleMedium">Choose an image</Text>
+                        {image && (
+                            <Icon name="check" size={20} color={'green'} />
+                        )}
                     </View>
-                    <View style={styles.garbageCategory}>
-                        <View style={styles.garbageCategoryText}>
-                            <Text variant="labelLarge">Refundables </Text>
-                            <Icon
-                                name="bottle-soda"
-                                size={16}
-                                color="darkblue"
+                    <View style={styles.imageSelectBar}>
+                        <Button
+                            onPress={selectImage}
+                            icon="image-area"
+                            mode="outlined"
+                        >
+                            Open Gallery
+                        </Button>
+                        <Button
+                            onPress={takePhoto}
+                            icon="camera"
+                            mode="outlined"
+                        >
+                            Open Camera
+                        </Button>
+                    </View>
+
+                    {image !== null ? (
+                        <Image
+                            source={{
+                                uri: image,
+                            }}
+                            style={styles.imageBox}
+                        />
+                    ) : null}
+
+                    <Text variant="titleMedium" style={styles.text}>
+                        Write a descriptive title
+                    </Text>
+                    <TextInput
+                        style={styles.input}
+                        label="Title"
+                        mode="outlined"
+                        value={title}
+                        onChangeText={setTitle}
+                        maxLength={titleMaxLength}
+                    />
+
+                    <Text style={styles.textLimit}>
+                        {title.length}/{titleMaxLength}
+                    </Text>
+                    <Text variant="titleMedium" style={styles.text}>
+                        (Optional) Write a description
+                    </Text>
+                    <TextInput
+                        style={styles.input}
+                        mode="outlined"
+                        label="Description"
+                        value={description}
+                        onChangeText={setDescription}
+                        multiline={true}
+                        numberOfLines={4}
+                        maxLength={descriptionMaxLength}
+                    />
+                    <Text style={styles.textLimit}>
+                        {description.length}/{descriptionMaxLength}
+                    </Text>
+                    <Text variant="titleMedium" style={styles.text}>
+                        Select all the garbage categories that apply
+                    </Text>
+                    <View style={styles.garbageCategoriesContainer}>
+                        <View style={styles.garbageCategory}>
+                            <View style={styles.garbageCategoryText}>
+                                <Text variant="labelLarge">Trash </Text>
+                                <Icon name="trash-can" size={16} color="gray" />
+                            </View>
+                            <Checkbox
+                                disabled={false}
+                                value={isTrash}
+                                status={isTrash ? 'checked' : 'unchecked'}
+                                onPress={() => {
+                                    setIsTrash(!isTrash)
+                                }}
                             />
                         </View>
-                        <Checkbox
-                            disabled={false}
-                            value={isRefundables}
-                            status={isRefundables ? 'checked' : 'unchecked'}
-                            onPress={() => {
-                                setIsRefundables(!isRefundables)
-                            }}
-                        />
-                    </View>
-                    <View style={styles.garbageCategory}>
-                        <View style={styles.garbageCategoryText}>
-                            <Text variant="labelLarge">Recyclables </Text>
-                            <Icon name="recycle" size={16} color="#5592b4" />
+                        <View style={styles.garbageCategory}>
+                            <View style={styles.garbageCategoryText}>
+                                <Text variant="labelLarge">Refundables </Text>
+                                <Icon
+                                    name="bottle-soda"
+                                    size={16}
+                                    color="darkblue"
+                                />
+                            </View>
+                            <Checkbox
+                                disabled={false}
+                                value={isRefundables}
+                                status={isRefundables ? 'checked' : 'unchecked'}
+                                onPress={() => {
+                                    setIsRefundables(!isRefundables)
+                                }}
+                            />
                         </View>
-                        <Checkbox
-                            disabled={false}
-                            value={isRecyclables}
-                            status={isRecyclables ? 'checked' : 'unchecked'}
-                            onPress={() => {
-                                setIsRecyclables(!isRecyclables)
-                            }}
-                        />
-                    </View>
-                    <View style={styles.garbageCategory}>
-                        <View style={styles.garbageCategoryText}>
-                            <Text variant="labelLarge">Compost </Text>
-                            <Icon name="leaf" size={16} color="green" />
+                        <View style={styles.garbageCategory}>
+                            <View style={styles.garbageCategoryText}>
+                                <Text variant="labelLarge">Recyclables </Text>
+                                <Icon
+                                    name="recycle"
+                                    size={16}
+                                    color="#5592b4"
+                                />
+                            </View>
+                            <Checkbox
+                                disabled={false}
+                                value={isRecyclables}
+                                status={isRecyclables ? 'checked' : 'unchecked'}
+                                onPress={() => {
+                                    setIsRecyclables(!isRecyclables)
+                                }}
+                            />
                         </View>
-                        <Checkbox
-                            disabled={false}
-                            value={isCompost}
-                            status={isCompost ? 'checked' : 'unchecked'}
-                            onPress={() => {
-                                setIsCompost(!isCompost)
-                            }}
-                        />
+                        <View style={styles.garbageCategory}>
+                            <View style={styles.garbageCategoryText}>
+                                <Text variant="labelLarge">Compost </Text>
+                                <Icon name="leaf" size={16} color="green" />
+                            </View>
+                            <Checkbox
+                                disabled={false}
+                                value={isCompost}
+                                status={isCompost ? 'checked' : 'unchecked'}
+                                onPress={() => {
+                                    setIsCompost(!isCompost)
+                                }}
+                            />
+                        </View>
                     </View>
-                </View>
 
-                <View style={styles.imageSelectText}>
-                    <Text variant="titleMedium">Choose a location</Text>
-                    {position && (
-                        <Icon name="check" size={20} color={'green'} />
+                    <View style={styles.imageSelectText}>
+                        <Text variant="titleMedium">Choose a location</Text>
+                        {position && (
+                            <Icon name="check" size={20} color={'green'} />
+                        )}
+                    </View>
+                    <View style={styles.imageSelectBar}>
+                        <Button
+                            onPress={() => {
+                                setModalVisible(true)
+                                setCurrentLocationButtonPressed(false)
+                            }}
+                            mode="outlined"
+                            icon={'map-outline'}
+                            disabled={props.selectedMarker ? true : false}
+                        >
+                            Open Map
+                        </Button>
+                        <Button
+                            onPress={() => {
+                                useCurrentLocation()
+                                // setLocationLoading(true)
+                            }}
+                            mode={
+                                currentLocationButtonPressed
+                                    ? 'contained'
+                                    : 'outlined'
+                            }
+                            icon={'crosshairs-gps'}
+                            disabled={props.selectedMarker ? true : false}
+                            // loading={locationLoading}
+                        >
+                            Use Current Location
+                        </Button>
+                    </View>
+
+                    {missing.length > 0 && (
+                        <Text style={styles.warning} variant="labelLarge">
+                            Missing Fields: {missing.join(', ')}
+                        </Text>
                     )}
-                </View>
-                <View style={styles.imageSelectBar}>
-                    <Button
-                        onPress={() => {
-                            setModalVisible(true)
-                            setCurrentLocationButtonPressed(false)
-                        }}
-                        mode="outlined"
-                        icon={'map-outline'}
-                        disabled={props.selectedMarker ? true : false}
-                    >
-                        Open Map
-                    </Button>
-                    <Button
-                        onPress={() => {
-                            useCurrentLocation()
-                            // setLocationLoading(true)
-                        }}
-                        mode={
-                            currentLocationButtonPressed
-                                ? 'contained'
-                                : 'outlined'
-                        }
-                        icon={'crosshairs-gps'}
-                        disabled={props.selectedMarker ? true : false}
-                        // loading={locationLoading}
-                    >
-                        Use Current Location
-                    </Button>
-                </View>
-
-                {missing.length > 0 && (
-                    <Text style={styles.warning} variant="labelLarge">
-                        Missing Fields: {missing.join(', ')}
-                    </Text>
-                )}
-                {chooseOneWarning && (
-                    <Text style={styles.warning} variant="labelLarge">
-                        Please select at least one garbage category
-                    </Text>
-                )}
-                <Divider />
-                {uploading && (
-                    <View>
-                        <ProgressBar
-                            progress={transferred}
-                            style={styles.progressBar}
-                        />
+                    {chooseOneWarning && (
+                        <Text style={styles.warning} variant="labelLarge">
+                            Please select at least one garbage category
+                        </Text>
+                    )}
+                    <Divider />
+                    {uploading && (
+                        <View>
+                            <ProgressBar
+                                progress={transferred}
+                                style={styles.progressBar}
+                            />
+                        </View>
+                    )}
+                    <View style={styles.submitBar}>
+                        <Button
+                            onPress={() => resetForm()}
+                            disabled={props.selectedMarker ? true : false}
+                        >
+                            Reset Form
+                        </Button>
+                        <Button
+                            onPress={handleFormSubmit}
+                            mode="contained"
+                            disabled={uploading}
+                        >
+                            Submit
+                        </Button>
                     </View>
-                )}
-                <View style={styles.submitBar}>
-                    <Button
-                        onPress={() => resetForm()}
-                        disabled={props.selectedMarker ? true : false}
-                    >
-                        Reset Form
-                    </Button>
-                    <Button
-                        onPress={handleFormSubmit}
-                        mode="contained"
-                        disabled={uploading}
-                    >
-                        Submit
-                    </Button>
-                </View>
+                </Surface>
             </ScrollView>
         )
     }
@@ -617,7 +596,6 @@ export function AddScreen(props) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        marginBottom: 0,
     },
     map: {
         flex: 1,

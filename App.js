@@ -1,5 +1,11 @@
 import { StatusBar } from 'expo-status-bar'
-import { StyleSheet, useColorScheme, LogBox } from 'react-native'
+import {
+    StyleSheet,
+    useColorScheme,
+    LogBox,
+    View,
+    SafeAreaView,
+} from 'react-native'
 import { NavigationContainer } from '@react-navigation/native'
 import React, { useState, useEffect, createContext } from 'react'
 import auth from '@react-native-firebase/auth'
@@ -26,13 +32,13 @@ export default function App() {
 
     const colorScheme = useColorScheme()
 
-    // const paperTheme =
-    //     colorScheme === 'dark' ? { ...MD3DarkTheme } : { ...MD3LightTheme }
+    const paperTheme =
+        colorScheme === 'dark' ? { ...MD3DarkTheme } : { ...MD3LightTheme }
 
-    const paperTheme = {
-        ...MD3LightTheme,
-        colors: { ...MD3LightTheme.colors },
-    }
+    // const paperTheme = {
+    //     ...MD3LightTheme,
+    //     colors: { ...MD3LightTheme.colors },
+    // }
 
     useEffect(() => {
         const subscriber = auth().onAuthStateChanged(onAuthStateChanged)
@@ -72,28 +78,47 @@ export default function App() {
     return (
         <PaperProvider theme={paperTheme}>
             <UserContext.Provider value={{ user, setUser }}>
-                {/* <StatusBar /> */}
-                <NavigationContainer>
-                    <Tab.Navigator
-                        screenOptions={({ route }) => ({
-                            tabBarIcon: () => {
-                                let iconName
-                                size = 24
+                <StatusBar
+                    translucent={false}
+                    backgroundColor={paperTheme.colors.surface}
+                />
+                <SafeAreaView style={{ flex: 1 }}>
+                    <View style={{ flex: 1 }}>
+                        <NavigationContainer>
+                            <Tab.Navigator
+                                screenOptions={({ route }) => ({
+                                    tabBarIcon: () => {
+                                        let iconName
+                                        size = 24
 
-                                if (route.name === 'MapAdd') {
-                                    iconName = 'map-marker'
-                                } else if (route.name === 'Profile') {
-                                    iconName = 'account'
-                                } else if (route.name === 'More') {
-                                    iconName = 'lightbulb'
-                                }
+                                        if (route.name === 'MapAdd') {
+                                            iconName = 'map-marker'
+                                        } else if (route.name === 'Profile') {
+                                            iconName = 'account'
+                                        } else if (route.name === 'More') {
+                                            iconName = 'lightbulb'
+                                        }
 
-                                // You can return any component that you like here!
-                                return <Icon name={iconName} size={size} />
-                            },
-                        })}
-                    >
-                        {/* <Tab.Screen
+                                        // You can return any component that you like here!
+                                        return (
+                                            <Icon
+                                                name={iconName}
+                                                size={size}
+                                                color={
+                                                    paperTheme.colors.primary
+                                                }
+                                            />
+                                        )
+                                    },
+                                })}
+                                barStyle={{
+                                    backgroundColor: paperTheme.colors.surface,
+                                    paddingBottom: -48,
+                                }}
+                                activeColor={paperTheme.colors.primary}
+                                inactiveColor={paperTheme.colors.primary}
+                            >
+                                {/* <Tab.Screen
                         name="Map"
                         children={() => (
                             <MapScreen
@@ -115,53 +140,40 @@ export default function App() {
                             />
                         )}
                     /> */}
-                        <Tab.Screen
-                            name="MapAdd"
-                            children={() => (
-                                <MapAddScreen
-                                    user={user}
-                                    setUser={setUser}
-                                    markers={markers}
-                                    setMarkers={setMarkers}
+                                <Tab.Screen
+                                    name="MapAdd"
+                                    children={() => (
+                                        <MapAddScreen
+                                            user={user}
+                                            setUser={setUser}
+                                            markers={markers}
+                                            setMarkers={setMarkers}
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
 
-                        <Tab.Screen
-                            name="Profile"
-                            children={() => (
-                                <ProfileScreen
-                                    user={user}
-                                    setUser={setUser}
-                                    setMarkers={setMarkers}
-                                    onAuthStateChanged={onAuthStateChanged}
+                                <Tab.Screen
+                                    name="Profile"
+                                    children={() => (
+                                        <ProfileScreen
+                                            user={user}
+                                            setUser={setUser}
+                                            setMarkers={setMarkers}
+                                            onAuthStateChanged={
+                                                onAuthStateChanged
+                                            }
+                                        />
+                                    )}
                                 />
-                            )}
-                        />
-                        <Tab.Screen
-                            name="More"
-                            children={() => <MoreScreen user={user} />}
-                        />
-                    </Tab.Navigator>
-                </NavigationContainer>
+                                <Tab.Screen
+                                    name="More"
+                                    children={() => <MoreScreen user={user} />}
+                                />
+                            </Tab.Navigator>
+                        </NavigationContainer>
+                    </View>
+                </SafeAreaView>
             </UserContext.Provider>
         </PaperProvider>
     )
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    map: {
-        width: '100%',
-        height: '100%',
-    },
-    markerBox: {
-        margin: 20,
-        flex: 1,
-    },
-})

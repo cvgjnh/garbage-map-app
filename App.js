@@ -43,6 +43,7 @@ export default function App() {
                       primaryContainer: '#2e3a2f',
                       onPrimaryContainer: '#8e7b6e',
                       surface: '#2e3a2f',
+                      secondaryContainer: '#8e7b6e',
                   },
               }
             : {
@@ -54,13 +55,9 @@ export default function App() {
                       primaryContainer: '#79695d',
                       onPrimaryContainer: '#433124',
                       surface: '#c0cfb9',
+                      secondaryContainer: '#ae927c',
                   },
               }
-
-    // const paperTheme = {
-    //     ...MD3LightTheme,
-    //     colors: { ...MD3LightTheme.colors },
-    // }
 
     useEffect(() => {
         const subscriber = auth().onAuthStateChanged(onAuthStateChanged)
@@ -108,6 +105,7 @@ export default function App() {
                     <View style={{ flex: 1 }}>
                         <NavigationContainer>
                             <Tab.Navigator
+                                theme={paperTheme}
                                 screenOptions={({ route }) => ({
                                     tabBarIcon: () => {
                                         let iconName
@@ -135,7 +133,6 @@ export default function App() {
                                 })}
                                 barStyle={{
                                     backgroundColor: paperTheme.colors.surface,
-                                    paddingBottom: -48,
                                 }}
                                 activeColor={paperTheme.colors.primary}
                                 inactiveColor={paperTheme.colors.primary}

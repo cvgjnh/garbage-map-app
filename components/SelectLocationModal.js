@@ -6,6 +6,7 @@ import {
     FAB,
     Modal,
     Portal,
+    useTheme,
 } from 'react-native-paper'
 import React, { useState, useRef, useEffect } from 'react'
 import MapView from 'react-native-maps'
@@ -25,6 +26,8 @@ export function SelectLocationModal(props) {
         latitudeDelta: 0.0421,
         longitudeDelta: 0.001,
     }
+
+    const theme = useTheme()
 
     useEffect(() => {
         const setInitialLocation = async () => {
@@ -168,6 +171,7 @@ export function SelectLocationModal(props) {
                                         })
                                         console.log(e.nativeEvent.coordinate)
                                     }}
+                                    pinColor={theme.colors.primary}
                                 />
                             </MapView>
                         </>

@@ -71,8 +71,6 @@ export default function App() {
                 uid: uid,
                 email: user.email,
                 username: uid.substring(0, 8),
-                numCreatedMarkers: 0,
-                numCreatedLogs: 0,
             }
             const usersRef = firestore().collection('users')
             usersRef
@@ -93,6 +91,37 @@ export default function App() {
             setUser(null)
         }
     }
+
+    useEffect(() => {
+        if (user) {
+            firestore()
+                .collection('logs')
+                .where('userId', '==', user.uid)
+                .count()
+                .get()
+                .then((snapshot) => {
+                    setUser((prevUser) => {
+                        return {
+                            ...prevUser,
+                            numCreatedLogs: snapshot.data().count,
+                        }
+                    })
+                })
+            firestore()
+                .collection('markers')
+                .where('userId', '==', user.uid)
+                .count()
+                .get()
+                .then((snapshot) => {
+                    setUser((prevUser) => {
+                        return {
+                            ...prevUser,
+                            numCreatedMarkers: snapshot.data().count,
+                        }
+                    })
+                })
+        }
+    }, [user?.uid])
 
     return (
         <PaperProvider theme={paperTheme}>

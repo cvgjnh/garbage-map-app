@@ -327,15 +327,7 @@ export function AddScreen(props) {
                             createdAt: firestore.Timestamp.fromDate(new Date()),
                             found: true,
                             username: props.user.username,
-                        })
-                })
-                .then(() => {
-                    return firestore()
-                        .collection('users')
-                        .doc(props.user.uid)
-                        .update({
-                            numCreatedMarkers: props.user.numCreatedMarkers + 1,
-                            numCreatedLogs: props.user.numCreatedLogs + 1,
+                            userId: props.user.uid,
                         })
                 })
                 .then(() => {

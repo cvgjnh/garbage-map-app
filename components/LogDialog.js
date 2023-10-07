@@ -47,14 +47,6 @@ export function LogDialog(props) {
                 ])
             })
             .then(() => {
-                firestore()
-                    .collection('users')
-                    .doc(props.user.uid)
-                    .update({
-                        numCreatedLogs: props.user.numCreatedLogs + 1,
-                    })
-            })
-            .then(() => {
                 props.setUser({
                     ...props.user,
                     numCreatedLogs: props.user.numCreatedLogs + 1,

@@ -35,15 +35,6 @@ export function CreatedMarkersList(props) {
             .doc(marker.id)
             .delete()
             .then(() => {
-                console.log('Marker deleted!')
-                firestore()
-                    .collection('users')
-                    .doc(props.user.uid)
-                    .update({
-                        numCreatedMarkers: props.user.numCreatedMarkers - 1,
-                    })
-            })
-            .then(() => {
                 props.setUser({
                     ...props.user,
                     numCreatedMarkers: props.user.numCreatedMarkers - 1,

@@ -1,42 +1,35 @@
 {
-  "expo": {
-    "name": "JapanGarbageMap",
-    "slug": "JapanGarbageMap",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "jsEngine": "hermes",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "package": "com.anonymous.JapanGarbageMap",
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyBqz-gEJkERfwZ6Kh1KkrVABMofWiMdViU"
+    "expo": {
+        "name": "JapanGarbageMap",
+        "slug": "JapanGarbageMap",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "jsEngine": "hermes",
+        "userInterfaceStyle": "light",
+        "splash": {
+            "image": "./assets/splash.png",
+            "resizeMode": "contain",
+            "backgroundColor": "#ffffff"
+        },
+        "assetBundlePatterns": ["**/*"],
+        "ios": {
+            "supportsTablet": true
+        },
+        "android": {
+            "adaptiveIcon": {
+                "foregroundImage": "./assets/adaptive-icon.png",
+                "backgroundColor": "#ffffff"
+            },
+            "package": "com.anonymous.JapanGarbageMap"
+        },
+        "web": {
+            "favicon": "./assets/favicon.png"
+        },
+        "extra": {
+            "eas": {
+                "projectId": "d1b43510-c56b-48cd-b0cf-59020274284d"
+            }
         }
-      }
-    },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "d1b43510-c56b-48cd-b0cf-59020274284d"
-      }
     }
-  }
 }

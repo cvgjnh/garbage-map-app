@@ -25,16 +25,16 @@ Additional features:
 ## Example Screens
 
 <p float="left">
-<img src="assets/map_screen.png" width="50%" >
-<img src="assets/add_marker_screen.png" width="50%" >
+<img src="assets/map_screen.png" width="49%" >
+<img src="assets/add_marker_screen.png" width="49%" >
 
 <p float="left">
-<img src="assets/view_marker_screen.png" width="50%" >
-<img src="assets/log_dialog.png" width="50%" >
+<img src="assets/view_marker_screen.png" width="49%" >
+<img src="assets/log_dialog.png" width="49%" >
 </p>
 <p float="left">
-<img src="assets/profile_screen.png" width="50%" >
-<img src="assets/feedback_screen.png" width="50%" >
+<img src="assets/profile_screen.png" width="49%" >
+<img src="assets/feedback_screen.png" width="49%" >
 </p>
 
 ## Technologies Used

@@ -8,9 +8,7 @@ npm-debug.*
 *.key
 *.mobileprovision
 *.orig.*
-.env*
 web-build/
-android/app/google-services.json
 %ProgramData%/
 # macOS
 .DS_Store

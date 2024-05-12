@@ -109,6 +109,7 @@ def reactNativeArchitectures() {
     return value ? value.split(",") : ["armeabi-v7a", "x86", "x86_64", "arm64-v8a"]
 }
 
+apply from: new File(["node", "--print", "require.resolve('@sentry/react-native/package.json')"].execute().text.trim(), "../sentry.gradle")
 android {
     ndkVersion rootProject.ext.ndkVersion
 
@@ -119,9 +120,11 @@ android {
         applicationId 'com.anonymous.JapanGarbageMap'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
+        versionCode 20
         versionName "1.0.0"
         vectorDrawables.useSupportLibrary = true
+        manifestPlaceholders = [EXPO_PUBLIC_MAPS_API_KEY: "${System.getenv("EXPO_PUBLIC_MAPS_API_KEY")}"]
+
     }
 
     splits {
@@ -195,7 +198,7 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
     implementation 'com.firebaseui:firebase-ui-auth:7.2.0'
-    implementation 'com.facebook.android:facebook-android-sdk:latest.release'
+    // implementation 'com.facebook.android:facebook-android-sdk:latest.release'
 
     // Required only if Facebook login support is required
     // Find the latest Facebook SDK releases here: https://goo.gl/Ce5L94

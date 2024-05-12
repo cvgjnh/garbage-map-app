@@ -40,8 +40,11 @@ export function GoogleSignOut() {
 }
 
 GoogleSignin.configure({
-  webClientId:
-    '451639436511-ii6eceujoj7ib8cchq6tnfd248d9afkg.apps.googleusercontent.com',
+  // eslint-disable-next-line no-undef
+  webClientId: __DEV__
+    ? '451639436511-ii6eceujoj7ib8cchq6tnfd248d9afkg.apps.googleusercontent.com'
+    : '641513504724-8qh2ou0p3poj9o7bt3liddoucglcuqcf.apps.googleusercontent.com',
+  offlineAccess: true,
 });
 
 const onGoogleButtonPress = async () => {

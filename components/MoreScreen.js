@@ -31,10 +31,9 @@ export function MoreScreen() {
         <Text variant="headlineMedium">About This App</Text>
         <Text variant="bodyLarge">
           This app was created and will be maintained as a not-for-profit
-          personal project by myself, Harry. {'\n\n'}I was inspired by the lack
-          of public garbage cans when I visited Japan, and thought that maybe I
-          could turn this idea into a fun project which could also help others.{' '}
-          {'\n\n'}
+          personal project. {'\n\n'}I was inspired by the lack of public garbage
+          cans when I visited Japan, and thought that maybe I could turn this
+          idea into a fun project which could also help others. {'\n\n'}
         </Text>
         <Text variant="headlineMedium">Feedback</Text>
         <Text variant="bodyLarge">

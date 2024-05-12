@@ -10,20 +10,27 @@ import {
   Snackbar,
   Portal,
 } from 'react-native-paper';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import VersionCheck from 'react-native-version-check';
 import { createMaterialBottomTabNavigator } from 'react-native-paper/react-navigation';
 import auth from '@react-native-firebase/auth';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import NetInfo from '@react-native-community/netinfo';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import * as Sentry from '@sentry/react-native';
 import { MapAddScreen } from './components/MapAddScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { MoreScreen } from './components/MoreScreen';
 import { UserContext } from './UserContext';
 
+Sentry.init({
+  dsn: 'https://ee11ad3133033d40cbb7a66596522447@o4507239838842880.ingest.us.sentry.io/4507239839105024',
+});
+
 const Tab = createMaterialBottomTabNavigator();
 
-export default function App() {
+function App() {
   // could also use useContext for the global user state but the user state is used in so many places that it would be a pain to change
   const [user, setUser] = useState(null);
   const [disconnectedMessageVisible, setDisconnectedMessageVisible] =
@@ -107,6 +114,11 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    console.log(VersionCheck.getCurrentVersion());
+    console.log(VersionCheck.getLatestVersion({ provider: 'playStore' }));
+  }, []);
+
+  useEffect(() => {
     if (user) {
       firestore()
         .collection('logs')
@@ -173,7 +185,11 @@ export default function App() {
               activeColor={paperTheme.colors.primary}
               inactiveColor={paperTheme.colors.primary}
             >
-              <Tab.Screen name="MapAdd" children={() => <MapAddScreen />} />
+              <Tab.Screen
+                name="MapAdd"
+                children={() => <MapAddScreen />}
+                options={{ tabBarLabel: 'Map' }}
+              />
 
               <Tab.Screen name="Profile" children={() => <ProfileScreen />} />
               <Tab.Screen name="More" children={() => <MoreScreen />} />
@@ -203,3 +219,5 @@ export default function App() {
     </PaperProvider>
   );
 }
+
+export default Sentry.wrap(App);

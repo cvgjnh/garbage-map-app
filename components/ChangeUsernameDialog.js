@@ -32,7 +32,6 @@ export function ChangeUsernameDialog(props) {
       return;
     }
 
-    setUsernameExists(true);
     firestore()
       .collection('users')
       .doc(user.uid)

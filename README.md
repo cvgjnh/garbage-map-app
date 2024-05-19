@@ -4,7 +4,7 @@ The Garbage Map App is a user-friendly mobile application developed using React 
 
 This personal project was inspired by my trip to Japan where I noticed that public garbage bins were very scarce. I developed the app by myself from scratch all the way to deployment on the Play Store. Maintaining and improving the app is currently an ongoing process!
 
-Download the latest version of the app from the Play Store here (link available soon).
+Download the latest version of the app from the Play Store [here](https://play.google.com/store/apps/details?id=com.anonymous.JapanGarbageMap)!
 
 ## Features
 
